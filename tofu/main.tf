@@ -43,7 +43,7 @@ resource "libvirt_cloudinit_disk" "common" {
 # VMS
 # ---------------------------------------------------
 resource "libvirt_domain" "vm" {
-  count  = 3
+  count  = 1
   name   = "k8s-node-${count.index}"
 
   memory = 3072
