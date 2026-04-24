@@ -16,6 +16,13 @@ else
 
     echo "✅ Pool '$POOL_NAME' created and started."
 fi
+virsh list --all
+sudo virsh destroy k8s-node-0
+sudo virsh destroy k8s-node-1
+sudo virsh destroy k8s-node-2
+sudo virsh undefine k8s-node-0
+sudo virsh undefine k8s-node-1
+sudo virsh undefine k8s-node-2
 echo "Creating VMs..."
 cd tofu
 tofu init
