@@ -11,7 +11,7 @@ resource "libvirt_volume" "ubuntu" {
 resource "libvirt_domain" "vm" {
   count  = 3
   name   = "k8s-node-${count.index}"
-  memory = 4096
+  memory = 3072
   vcpu   = 2
 
   disk {
