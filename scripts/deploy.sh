@@ -7,6 +7,11 @@ virsh list --all
 ##sudo virsh pool-delete "$POOL_NAME"
 ##sudo virsh pool-undefine "$POOL_NAME"
 
+for vm in k8s-node-0 k8s-node-1 k8s-node-2; do
+  sudo virsh destroy $vm 2>/dev/null || true
+  sudo virsh undefine $vm 2>/dev/null || true
+done
+
 if virsh pool-info "$POOL_NAME" >/dev/null 2>&1; then
     echo "✅ Pool '$POOL_NAME' already exists. Skipping creation."
 else
