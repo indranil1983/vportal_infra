@@ -1,10 +1,21 @@
 #!/bin/bash
 set -e
-sudo virsh pool-define-as default dir - - - - "/var/lib/libvirt/images"
-sudo virsh pool-build default
-sudo virsh pool-start default
-sudo virsh pool-autostart default
-virsh pool-list --all
+POOL_NAME="default"
+
+echo "🔍 Checking if libvirt pool '$POOL_NAME' exists..."
+
+if virsh pool-info "$POOL_NAME" >/dev/null 2>&1; then
+    echo "✅ Pool '$POOL_NAME' already exists. Skipping creation."
+else
+    echo "⚙️ Pool '$POOL_NAME' not found. Creating it..."
+
+    sudo virsh pool-define-as "$POOL_NAME" dir - - - - "/var/lib/libvirt/images"
+    sudo virsh pool-build "$POOL_NAME"
+    sudo virsh pool-start "$POOL_NAME"
+    sudo virsh pool-autostart "$POOL_NAME"
+
+    echo "✅ Pool '$POOL_NAME' created and started."
+fi
 echo "Creating VMs..."
 cd tofu
 tofu init
