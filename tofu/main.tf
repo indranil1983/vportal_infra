@@ -24,7 +24,7 @@ resource "libvirt_volume" "ubuntu_base" {
 # PER-VM DISKS (CRITICAL FIX: no shared disk)
 # ---------------------------------------------------
 resource "libvirt_volume" "disk" {
-  count = 3
+  count = 1
 
   name           = "k8s-node-${count.index}.qcow2"
   base_volume_id = libvirt_volume.ubuntu_base.id
