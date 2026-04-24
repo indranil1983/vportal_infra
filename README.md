@@ -1,1 +1,3 @@
-This project contains the infrastructure management for vportal
+# k8s-home-lab
+
+Automated Kubernetes cluster using OpenTofu + Ansible + k3s
