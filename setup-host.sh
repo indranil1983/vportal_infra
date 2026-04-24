@@ -31,14 +31,7 @@ echo "📦 Installing OpenTofu..."
 # Add OpenTofu repo (official method)
 if ! command -v tofu &> /dev/null; then
   echo "Adding OpenTofu repository..."
-  curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | \
-    sudo gpg --dearmor -o /usr/share/keyrings/opentofu.gpg
-
-  echo "deb [signed-by=/usr/share/keyrings/opentofu.gpg] https://packages.opentofu.org/opentofu/tofu/ubuntu $(lsb_release -cs) main" | \
-    sudo tee /etc/apt/sources.list.d/opentofu.list > /dev/null
-
-  sudo apt update
-  sudo apt install -y opentofu
+  sudo snap install --classic opentofu
 else
   echo "OpenTofu already installed"
 fi
