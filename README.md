@@ -4,14 +4,20 @@ Automated Kubernetes cluster using OpenTofu + Ansible + k3s
 
 What to do next
 
-Unzip it:
+## Setup Instructions
+
+### 1. Unzip the project
+```bash
 unzip k8s-home-lab.zip
 cd k8s-home-lab
-Add your SSH public key in:
+2. Add your SSH public key
+
+Edit the file:
+
 tofu/cloud_init.cfg
-Run:
+3. Run the deployment
 chmod +x scripts/deploy.sh
-./scripts/deploy.sh
+./scripts/deploy.sh 
 
 ⚠️ Before you run it
 
