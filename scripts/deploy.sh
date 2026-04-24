@@ -4,8 +4,8 @@ POOL_NAME="default"
 
 echo "🔍 Checking if libvirt pool '$POOL_NAME' exists..."
 virsh list --all
---sudo virsh pool-delete "$POOL_NAME"
---sudo virsh pool-undefine "$POOL_NAME"
+##sudo virsh pool-delete "$POOL_NAME"
+##sudo virsh pool-undefine "$POOL_NAME"
 
 if virsh pool-info "$POOL_NAME" >/dev/null 2>&1; then
     echo "✅ Pool '$POOL_NAME' already exists. Skipping creation."
