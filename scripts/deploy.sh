@@ -28,9 +28,8 @@ fi
 echo "Creating VMs..."
 cd tofu
 tofu init
-sudo chown libvirt-qemu:kvm /var/lib/libvirt/images/ubuntu.qcow2
-sudo chmod 644 /var/lib/libvirt/images/ubuntu.qcow2
-sudo chmod 755 /var/lib/libvirt/images
+sudo chmod -R 777 /var/lib/libvirt/images/ubuntu.qcow2
+sudo chmod -R /var/lib/libvirt/images
 tofu apply -auto-approve
 
 echo "Waiting for VMs..."
