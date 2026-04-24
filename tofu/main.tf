@@ -48,7 +48,9 @@ resource "libvirt_domain" "vm" {
 
   cloudinit = libvirt_cloudinit_disk.common.id
 
-  console {
-    type = "pty"
-  }
+ console {
+  type        = "pty"
+  target_type = "serial"
+  target_port = 0
+}
 }
