@@ -59,3 +59,8 @@ echo "  virsh list --all"
 
 echo ""
 echo "✅ Setup complete!"
+
+sudo chown -R libvirt-qemu:kvm /var/lib/libvirt/images
+sudo chmod 755 /var/lib/libvirt/images
+sudo chown libvirt-qemu:kvm /var/lib/libvirt/images/ubuntu.qcow2
+sudo chmod 644 /var/lib/libvirt/images/ubuntu.qcow2
