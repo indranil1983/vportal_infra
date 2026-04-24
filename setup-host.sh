@@ -36,6 +36,8 @@ else
   echo "OpenTofu already installed"
 fi
 
+sudo apt install -y genisoimage
+
 echo "🔍 Verifying installations..."
 
 echo -n "KVM: "
