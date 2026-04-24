@@ -3,6 +3,9 @@ set -e
 POOL_NAME="default"
 
 echo "🔍 Checking if libvirt pool '$POOL_NAME' exists..."
+virsh list --all
+sudo virsh pool-destroy default
+sudo virsh pool-delete default
 
 if virsh pool-info "$POOL_NAME" >/dev/null 2>&1; then
     echo "✅ Pool '$POOL_NAME' already exists. Skipping creation."
@@ -16,9 +19,7 @@ else
 
     echo "✅ Pool '$POOL_NAME' created and started."
 fi
-virsh list --all
-sudo virsh pool-destroy default
-sudo virsh pool-delete default
+
 echo "Creating VMs..."
 cd tofu
 tofu init
