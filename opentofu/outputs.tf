@@ -23,6 +23,6 @@ output "ssh_connect_commands" {
   description = "SSH commands to connect to each VM"
   value = {
     for name, vm in var.vms :
-    name => "ssh -i ~/.ssh/homelab_k8s ubuntu@${vm.ip}"
+    name => "ssh -i ~/.ssh/id_rsa ubuntu@${vm.ip}"
   }
 }

@@ -3,11 +3,11 @@
 # Run from the repo root: ./scripts/clean-state.sh
 
 set -e
-POOL_NAME="default"
+POOL_NAME="homelab-pool"
 IMAGES_DIR="/var/lib/libvirt/images"
 TOFU_DIR="$(dirname "$0")/../tofu"
-VMS=(k8s-node-0 k8s-node-1 k8s-node-2)
-VOLUMES=(ubuntu-base.qcow2 k8s-node-0.qcow2 k8s-node-1.qcow2 k8s-node-2.qcow2 cloudinit.iso)
+VMS=(k8s-master k8s-worker-1 k8s-worker-2)
+VOLUMES=(ubuntu-base.qcow2 k8s-worker-2-root.qcow2 k8s-worker-1-root.qcow2 k8s-master-root.qcow2 k8s-master-cloudinit.iso k8s-worker-1-cloudinit.iso k8s-worker-2-cloudinit.iso)
 
 echo ""
 echo "╔══════════════════════════════════════════╗"

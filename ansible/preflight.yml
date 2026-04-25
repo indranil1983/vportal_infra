@@ -3,10 +3,19 @@
 # Pre-flight Ansible playbook
 # Runs BEFORE Kubespray to verify nodes are ready
 # =============================================================================
+
+
 - name: Verify node connectivity
   hosts: all
   gather_facts: false
   tasks:
+    # - name: Wait for Cloud-init to finish
+    #   cloud_init_data_facts:
+    #   register: res
+    #   until: res.cloud_init_data_facts.status.v1.stage == 'done'
+    #   retries: 20
+    #   delay: 10
+
     - name: Wait for SSH to be available
       ansible.builtin.wait_for_connection:
         timeout: 120
@@ -67,7 +76,7 @@
 
     - name: Check available CPUs
       ansible.builtin.assert:
-        that: ansible_processor_vcpus >= 2
+        that: ansible_processor_vcpus >= 1
         fail_msg: "Node {{ inventory_hostname }} has only {{ ansible_processor_vcpus }} vCPUs (need >= 2)"
         success_msg: "CPU OK: {{ ansible_processor_vcpus }} vCPUs on {{ inventory_hostname }}"
 

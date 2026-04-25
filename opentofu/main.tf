@@ -1,9 +1,10 @@
 terraform {
   required_version = ">= 1.6.0"
+
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "~> 0.9"
+      version = "0.7.6" 
     }
   }
 }
@@ -13,73 +14,51 @@ provider "libvirt" {
 }
 
 # =============================================================================
-# Storage pool  (v0.9: path lives inside target = { path = "..." })
+# Storage pool
 # =============================================================================
 resource "libvirt_pool" "homelab" {
   name = var.pool_name
   type = "dir"
-
-  target = {
-    path = var.pool_path
-  }
+  # In 0.7.6, path is often preferred directly or inside a simplified target
+  path = var.pool_path
 }
 
 # =============================================================================
-# Base OS image  (v0.9: source URL goes in create.content.url)
+# Base image
 # =============================================================================
 resource "libvirt_volume" "ubuntu_base" {
-  name = "ubuntu-24.04-base.qcow2"
-  pool = libvirt_pool.homelab.name
-
-  target = {
-    format = {
-      type = "qcow2"
-    }
-  }
-
-  create = {
-    content = {
-      url = var.ubuntu_image_url
-    }
-  }
+  name   = "ubuntu-base.qcow2"
+  pool   = libvirt_pool.homelab.name
+  source = var.ubuntu_image_url
+  format = "qcow2"
 }
 
 # =============================================================================
-# Per-VM root disks  (v0.9: backing_store replaces base_volume_id)
+# VM root disks
 # =============================================================================
 resource "libvirt_volume" "vm_disk" {
   for_each = var.vms
 
-  name     = "${each.key}-root.qcow2"
-  pool     = libvirt_pool.homelab.name
-  capacity = each.value.disk_size   # bytes
+  name   = "${each.key}-root.qcow2"
+  pool   = libvirt_pool.homelab.name
+  format = "qcow2"
+  size   = each.value.disk_size
 
-  target = {
-    format = {
-      type = "qcow2"
-    }
-  }
-
-  backing_store = {
-    path = libvirt_volume.ubuntu_base.path
-    format = {
-      type = "qcow2"
-    }
-  }
+  base_volume_id = libvirt_volume.ubuntu_base.id
 }
 
 # =============================================================================
-# cloud-init seed ISO  (v0.9: meta_data required; pool arg removed)
+# Cloud-init disk
 # =============================================================================
 resource "libvirt_cloudinit_disk" "vm_init" {
   for_each = var.vms
+  name     = "${each.key}-cloudinit.iso"
+  pool     = libvirt_pool.homelab.name
 
-  name = "${each.key}-init"
-
-  meta_data = <<-EOF
-    instance-id: ${each.key}
-    local-hostname: ${each.key}
-  EOF
+  meta_data = <<EOF
+instance-id: ${each.key}
+local-hostname: ${each.key}
+EOF
 
   user_data = templatefile("${path.module}/templates/cloud-init-user-data.tftpl", {
     hostname   = each.key
@@ -89,109 +68,47 @@ resource "libvirt_cloudinit_disk" "vm_init" {
 
   network_config = templatefile("${path.module}/templates/cloud-init-network.tftpl", {
     ip_address = each.value.ip
-    gateway    = var.gateway
-    dns        = var.dns_server
+    gateway     = var.gateway
+    dns         = var.dns_server
   })
 }
 
 # =============================================================================
-# cloud-init volume (v0.9: mount cloudinit ISO path as a volume)
-# =============================================================================
-resource "libvirt_volume" "vm_cloudinit" {
-  for_each = var.vms
-
-  name = "${each.key}-cloudinit.iso"
-  pool = libvirt_pool.homelab.name
-
-  create = {
-    content = {
-      url = libvirt_cloudinit_disk.vm_init[each.key].path
-    }
-  }
-}
-
-# =============================================================================
-# Virtual Machines  (v0.9 schema: attribute-style, type required)
+# VM definition
 # =============================================================================
 resource "libvirt_domain" "vm" {
   for_each = var.vms
 
-  name        = each.key
-  type        = "kvm"
-  vcpu        = each.value.vcpu
-  memory      = each.value.memory_mb
-  memory_unit = "MiB"
+  name   = each.key
+  memory = each.value.memory_mb
+  vcpu   = each.value.vcpu
 
-  cpu = {
+  cpu {
     mode = "host-passthrough"
   }
 
-  os = {
-    type         = "hvm"
-    type_arch    = "x86_64"
-    type_machine = "q35"
+  # Ensure your libvirt/QEMU support q35; otherwise use "pc"
+  machine = "pc"
+  type    = "kvm"
+
+  disk {
+    volume_id = libvirt_volume.vm_disk[each.key].id
   }
 
-  devices = {
-    disks = [
-      {
-        source = {
-          volume = {
-            pool   = libvirt_pool.homelab.name
-            volume = libvirt_volume.vm_disk[each.key].name
-          }
-        }
-        target = {
-          dev = "vda"
-          bus = "virtio"
-        }
-      },
-      {
-        source = {
-          volume = {
-            pool   = libvirt_pool.homelab.name
-            volume = libvirt_volume.vm_cloudinit[each.key].name
-          }
-        }
-        target = {
-          dev = "sda"
-          bus = "sata"
-        }
-        readonly = true
-      }
-    ]
-
-    consoles = [
-      {
-        type = "pty"
-        target = {
-          type = "serial"
-          port = 0
-        }
-      }
-    ]
-
-    # graphics = [
-    #   {
-    #     type = "none"
-    #   }
-    # ]
-
-    interfaces = [
-      {
-        source = {
-          network = {
-            network = var.libvirt_network
-          }
-        }
-        model = {
-          type = "virtio"
-        }
-      }
-    ]
+  disk {
+    # Use the file path instead of the ID to avoid metadata mismatches
+    file = "${var.pool_path}/${each.key}-cloudinit.iso"
   }
 
-  provisioner "local-exec" {
-    command = "echo 'VM ${each.key} provisioned (IP: ${each.value.ip})'"
+  network_interface {
+    network_name   = var.libvirt_network
+    wait_for_lease = false
+    
+  }
+
+  console {
+    type        = "pty"
+    target_port = "0"
+    target_type = "serial"
   }
 }

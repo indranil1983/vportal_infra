@@ -36,7 +36,7 @@ usage() {
   exit 0
 }
 
-SKIP_TOFU=false
+SKIP_TOFU=true
 SKIP_PREFLIGHT=false
 SKIP_KUBESPRAY=false
 DESTROY=false
@@ -85,7 +85,7 @@ if ! $SKIP_TOFU; then
 
   # Wait for VMs to finish cloud-init
   log_info "Waiting 60s for cloud-init to complete on VMs..."
-  sleep 60
+  sleep 90
 else
   log_warn "Skipping OpenTofu (--skip-tofu)"
 fi
@@ -132,7 +132,9 @@ if ! $SKIP_KUBESPRAY; then
   source "$VENV/bin/activate"
 
   log_info "Running Kubespray cluster.yml playbook..."
+  cd /opt/kubespray
   ansible-playbook \
+    -e "kube_version=v1.30.0" \
     -i "$KUBESPRAY_INVENTORY/hosts.yml" \
     "$KUBESPRAY_DIR/cluster.yml" \
     --become \
@@ -149,11 +151,11 @@ if ! $SKIP_KUBESPRAY; then
   MASTER_IP="192.168.122.10"
   mkdir -p ~/.kube
 
-  scp -i ~/.ssh/homelab_k8s \
+  scp -i ~/.ssh/id_rsa \
       -o StrictHostKeyChecking=no \
       ubuntu@"$MASTER_IP":/home/ubuntu/.kube/config \
       ~/.kube/config-homelab 2>/dev/null || \
-  scp -i ~/.ssh/homelab_k8s \
+  scp -i ~/.ssh/id_rsa \
       -o StrictHostKeyChecking=no \
       ubuntu@"$MASTER_IP":/etc/kubernetes/admin.conf \
       ~/.kube/config-homelab

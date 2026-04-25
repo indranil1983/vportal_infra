@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Kubernetes version
-kube_version: v1.30.0
+kube_version: "v1.30.0"
 
 # Container runtime
 container_manager: containerd

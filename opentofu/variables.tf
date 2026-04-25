@@ -13,7 +13,7 @@ variable "pool_name" {
 variable "pool_path" {
   description = "Path on host for VM disk storage"
   type        = string
-  default     = "/var/lib/libvirt/homelab"
+  default     = "/home/echindr/project/vportal_hdd"
 }
 
 variable "ubuntu_image_url" {
@@ -31,7 +31,7 @@ variable "vm_user" {
 variable "ssh_public_key_path" {
   description = "Path to SSH public key injected into VMs"
   type        = string
-  default     = "~/.ssh/homelab_k8s.pub"
+  default     = "/home/echindr/.ssh/id_rsa.pub"
 }
 
 variable "libvirt_network" {
@@ -63,21 +63,21 @@ variable "vms" {
   }))
   default = {
     "k8s-master" = {
-      vcpu      = 2
+      vcpu      = 1
       memory_mb = 3072
       disk_size = 21474836480   # 20GB in bytes
       ip        = "192.168.122.10"
       role      = "master"
     }
     "k8s-worker-1" = {
-      vcpu      = 2
+      vcpu      = 1
       memory_mb = 3072
       disk_size = 21474836480
       ip        = "192.168.122.11"
       role      = "worker"
     }
     "k8s-worker-2" = {
-      vcpu      = 2
+      vcpu      = 1
       memory_mb = 3072
       disk_size = 21474836480
       ip        = "192.168.122.12"
