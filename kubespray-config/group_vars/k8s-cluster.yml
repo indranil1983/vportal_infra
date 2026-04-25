@@ -4,7 +4,7 @@
 # =============================================================================
 
 # Kubernetes version
-kube_version: "v1.30.0"
+#kube_version: "v1.28.10"
 
 # Container runtime
 container_manager: containerd
@@ -44,3 +44,6 @@ etcd_deployment_type: host
 
 # Audit logs
 kubernetes_audit: false
+
+# Add this to the bottom of k8s-cluster.yml
+containerd_use_systemd_cgroup: true

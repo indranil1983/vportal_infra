@@ -134,7 +134,6 @@ if ! $SKIP_KUBESPRAY; then
   log_info "Running Kubespray cluster.yml playbook..."
   cd /opt/kubespray
   ansible-playbook \
-    -e "kube_version=v1.30.0" \
     -i "$KUBESPRAY_INVENTORY/hosts.yml" \
     "$KUBESPRAY_DIR/cluster.yml" \
     --become \
