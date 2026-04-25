@@ -1,0 +1,80 @@
+---
+# =============================================================================
+# Pre-flight Ansible playbook
+# Runs BEFORE Kubespray to verify nodes are ready
+# =============================================================================
+- name: Verify node connectivity
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+        sleep: 5
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    - name: Verify Ubuntu 24.04
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version is version("24.04", ">=")
+        fail_msg: "Expected Ubuntu 24.04+, got {{ ansible_distribution }} {{ ansible_distribution_version }}"
+        success_msg: "OS check passed: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+
+    - name: Verify swap is disabled
+      ansible.builtin.command: swapon --show
+      register: swap_status
+      changed_when: false
+
+    - name: Assert swap is off
+      ansible.builtin.assert:
+        that: swap_status.stdout == ""
+        fail_msg: "Swap is still enabled on {{ inventory_hostname }}"
+        success_msg: "Swap is disabled on {{ inventory_hostname }}"
+
+    - name: Verify required kernel modules
+      ansible.builtin.command: lsmod
+      register: lsmod_output
+      changed_when: false
+
+    - name: Assert overlay module loaded
+      ansible.builtin.assert:
+        that: "'overlay' in lsmod_output.stdout"
+        fail_msg: "overlay kernel module not loaded on {{ inventory_hostname }}"
+
+    - name: Assert br_netfilter module loaded
+      ansible.builtin.assert:
+        that: "'br_netfilter' in lsmod_output.stdout"
+        fail_msg: "br_netfilter kernel module not loaded on {{ inventory_hostname }}"
+
+    - name: Verify IP forwarding enabled
+      ansible.builtin.command: sysctl net.ipv4.ip_forward
+      register: ip_forward
+      changed_when: false
+
+    - name: Assert IP forwarding is 1
+      ansible.builtin.assert:
+        that: "'= 1' in ip_forward.stdout"
+        fail_msg: "IP forwarding not enabled on {{ inventory_hostname }}"
+
+    - name: Check available memory
+      ansible.builtin.assert:
+        that: ansible_memtotal_mb >= 2048
+        fail_msg: "Node {{ inventory_hostname }} has only {{ ansible_memtotal_mb }}MB RAM (need >= 2048MB)"
+        success_msg: "Memory OK: {{ ansible_memtotal_mb }}MB on {{ inventory_hostname }}"
+
+    - name: Check available CPUs
+      ansible.builtin.assert:
+        that: ansible_processor_vcpus >= 2
+        fail_msg: "Node {{ inventory_hostname }} has only {{ ansible_processor_vcpus }} vCPUs (need >= 2)"
+        success_msg: "CPU OK: {{ ansible_processor_vcpus }} vCPUs on {{ inventory_hostname }}"
+
+- name: Pre-flight complete
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Print success
+      ansible.builtin.debug:
+        msg: "✅ Node {{ inventory_hostname }} passed all pre-flight checks"

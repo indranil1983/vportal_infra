@@ -1,0 +1,11 @@
+version: 2
+ethernets:
+  enp1s0:
+    dhcp4: false
+    addresses:
+      - ${ip_address}/24
+    gateway4: ${gateway}
+    nameservers:
+      addresses:
+        - ${dns}
+        - 1.1.1.1

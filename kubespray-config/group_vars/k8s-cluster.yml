@@ -1,0 +1,46 @@
+# =============================================================================
+# Kubespray cluster configuration
+# /opt/kubespray/inventory/mycluster/group_vars/k8s_cluster/k8s-cluster.yml
+# =============================================================================
+
+# Kubernetes version
+kube_version: v1.30.0
+
+# Container runtime
+container_manager: containerd
+
+# Network plugin — Calico is production-grade and well supported
+kube_network_plugin: calico
+
+# Pod and service CIDRs (must not overlap with your host network)
+kube_pods_subnet: 10.233.64.0/18
+kube_service_addresses: 10.233.0.0/18
+
+# DNS
+dns_domain: cluster.local
+dns_mode: coredns
+
+# Metrics server
+metrics_server_enabled: true
+
+# Helm
+helm_enabled: true
+
+# Ingress (nginx)
+ingress_nginx_enabled: true
+
+# Enable dashboard
+dashboard_enabled: false   # Set to true if you want the K8s dashboard
+
+# kubeconfig on master
+kubeconfig_localhost: true
+
+# Additional features
+kube_proxy_mode: ipvs
+kube_apiserver_node_port_range: "30000-32767"
+
+# etcd configuration
+etcd_deployment_type: host
+
+# Audit logs
+kubernetes_audit: false

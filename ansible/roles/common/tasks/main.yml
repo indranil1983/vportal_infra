@@ -1,7 +1,0 @@
-- name: Install dependencies
-  apt:
-    name:
-      - curl
-      - apt-transport-https
-    state: present
-    update_cache: yes
