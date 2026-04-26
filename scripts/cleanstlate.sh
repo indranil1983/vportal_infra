@@ -15,6 +15,14 @@ echo "║        vportal_infra clean-state         ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
+
+# Add this near the top of scripts/cleanstlate.sh
+log_step() { echo -e "\n\033[0;36m==== $1 ====\033[0m"; }
+log_info() { echo -e "\033[1;33m[INFO]\033[0m $1"; }
+log_error() { echo -e "\033[0;31m[ERROR]\033[0m $1"; exit 1; }
+log_success() { echo -e "\033[0;32m[SUCCESS]\033[0m $1"; }
+
+
 #=============================================================================
 # 1. OpenTofu Infrastructure Cleanup
 # =============================================================================
