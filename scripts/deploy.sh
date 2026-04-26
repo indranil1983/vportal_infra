@@ -175,19 +175,33 @@ if ! $SKIP_TOFU; then
   log_info "Waiting for VMs to be reachable via SSH..."
 
   # Maximum number of attempts (e.g., 30 attempts * 5 seconds = 150 seconds max)
-  MAX_RETRIES=30
-  COUNT=0
-  until ssh -i "$SSH_KEY_PATH" -o ConnectTimeout=2 -o StrictHostKeyChecking=no ubuntu@"$MASTER_IP" \
-    "lsmod | grep -q 'overlay' && lsmod | grep -q 'br_netfilter'" 2>/dev/null; do
-    
-    if [ $COUNT -ge $MAX_RETRIES ]; then
-        log_error "Kernel modules (overlay/br_netfilter) failed to load on $MASTER_IP."
-    fi
-    
-    echo -ne "  Waiting for network overlay on $MASTER_IP... ($(($COUNT + 1))/$MAX_RETRIES)\r"
-    sleep 5
-    COUNT=$((COUNT + 1))
+  log_step "Step 1.3 — Health Check: Verifying all Nodes"
+
+  # Define the list of IPs from your variables.tf (or extract from tofu output)
+  VM_IPS=($MASTER_IP "192.168.122.11" "192.168.122.12")
+
+  for IP in "${VM_IPS[@]}"; do
+      log_info "Checking Node: $IP"
+      
+      MAX_RETRIES=30
+      COUNT=0
+      SUCCESS=false
+
+      until ssh -i "$SSH_KEY_PATH" -o ConnectTimeout=2 -o BatchMode=yes -o StrictHostKeyChecking=no ubuntu@"$IP" \
+          "lsmod | grep -q 'overlay' && lsmod | grep -q 'br_netfilter' && test -f /var/lib/cloud/instance/boot-finished" 2>/dev/null; do
+          
+          if [ $COUNT -ge $MAX_RETRIES ]; then
+              log_error "Node $IP failed health checks (SSH/Overlay/Cloud-Init) after $(($MAX_RETRIES * 5))s."
+          fi          
+          echo -ne "  Waiting for $IP to initialize... ($(($COUNT + 1))/$MAX_RETRIES)\r"
+          sleep 10
+          COUNT=$((COUNT + 1))
+      done
+      echo -e "\n"
+      log_success "Node $IP is fully ready."
   done
+
+log_success "All Kubernetes nodes are pre-flight ready!"
 
 log_success "Overlay and br_netfilter are active."
 else
