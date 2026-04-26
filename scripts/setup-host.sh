@@ -75,7 +75,7 @@ ln -sf "$VENV_DIR/bin/ansible-playbook" /usr/local/bin/ansible-playbook
 
 ############ update qemu conf access ################
 
-log_step "Configuring QEMU Permissions (Prepending to top of file)"
+log_info "Configuring QEMU Permissions (Prepending to top of file)"
 
 QEMU_CONF="/etc/libvirt/qemu.conf"
 TEMP_CONF=$(mktemp)
