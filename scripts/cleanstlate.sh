@@ -3,8 +3,8 @@
 # Run from the repo root: ./scripts/clean-state.sh
 
 set -e
-POOL_NAME="homelab-pool"
-IMAGES_DIR="/var/lib/libvirt/images"
+POOL_NAME="vplatform_pool"
+IMAGES_DIR="$REAL_HOME"/virtual_machines/disks
 TOFU_DIR="$(dirname "$0")/../tofu"
 VMS=(k8s-master k8s-worker-1 k8s-worker-2)
 VOLUMES=(ubuntu-base.qcow2 k8s-worker-2-root.qcow2 k8s-worker-1-root.qcow2 k8s-master-root.qcow2 k8s-master-cloudinit.iso k8s-worker-1-cloudinit.iso k8s-worker-2-cloudinit.iso)
@@ -14,6 +14,17 @@ echo "╔═══════════════════════�
 echo "║        vportal_infra clean-state         ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
+
+#=============================================================================
+# 1. OpenTofu Infrastructure Cleanup
+# =============================================================================
+echo "Attempting to destroy OpenTofu managed VMs..."
+# Try to run destroy if the directory exists
+if command -v tofu &>/dev/null && [ -d "vplatform-k8s" ]; then
+    cd $TOFU_DIR && tofu destroy -auto-approve || log_warn "Tofu destroy failed; perhaps resources were already gone."
+    cd ..
+fi
+
 
 # ── 1. Destroy and undefine VMs ───────────────────────────────────────────────
 echo "🔴 [1/5] Stopping and undefining VMs..."
@@ -61,6 +72,27 @@ for f in terraform.tfstate terraform.tfstate.backup .terraform.lock.hcl; do
     rm -f "$FILE" && echo "  ✓ removed $FILE"
   fi
 done
+
+# ── 5. Wipe vm_nw ────────────────────────────────────────────────────────
+NETWORK_NAME="vplatform_nw"
+
+# 1. Stop the virtual network (Destroy the active instance)
+if sudo virsh net-info "$NETWORK_NAME" &>/dev/null; then
+    echo "[INFO] Stopping network: $NETWORK_NAME"
+    sudo virsh net-destroy "$NETWORK_NAME" 2>/dev/null || echo "[WARN] Network already stopped."
+    
+    # 2. Remove the autostart flag
+    echo "[INFO] Removing autostart for: $NETWORK_NAME"
+    sudo virsh net-autostart --disable "$NETWORK_NAME"
+    
+    # 3. Undefine the network (Delete the XML definition)
+    echo "[INFO] Undefining network: $NETWORK_NAME"
+    sudo virsh net-undefine "$NETWORK_NAME"
+    
+    echo "[OK] Network '$NETWORK_NAME' has been completely removed."
+else
+    echo "[SKIP] Network '$NETWORK_NAME' does not exist."
+fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

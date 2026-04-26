@@ -16,7 +16,7 @@ provider "libvirt" {
 # =============================================================================
 # Storage pool
 # =============================================================================
-resource "libvirt_pool" "homelab" {
+resource "libvirt_pool" "vplatform_pool" {
   name = var.pool_name
   type = "dir"
   # In 0.7.6, path is often preferred directly or inside a simplified target
@@ -28,9 +28,11 @@ resource "libvirt_pool" "homelab" {
 # =============================================================================
 resource "libvirt_volume" "ubuntu_base" {
   name   = "ubuntu-base.qcow2"
-  pool   = libvirt_pool.homelab.name
+  pool   = libvirt_pool.vplatform_pool.name
   source = var.ubuntu_image_url
   format = "qcow2"
+  # Add this to force the pool to exist BEFORE checking the volume
+  depends_on = [libvirt_pool.vplatform_pool]
 }
 
 # =============================================================================
@@ -40,7 +42,7 @@ resource "libvirt_volume" "vm_disk" {
   for_each = var.vms
 
   name   = "${each.key}-root.qcow2"
-  pool   = libvirt_pool.homelab.name
+  pool   = libvirt_pool.vplatform_pool.name
   format = "qcow2"
   size   = each.value.disk_size
 
@@ -53,7 +55,7 @@ resource "libvirt_volume" "vm_disk" {
 resource "libvirt_cloudinit_disk" "vm_init" {
   for_each = var.vms
   name     = "${each.key}-cloudinit.iso"
-  pool     = libvirt_pool.homelab.name
+  pool     = libvirt_pool.vplatform_pool.name
 
   meta_data = <<EOF
 instance-id: ${each.key}

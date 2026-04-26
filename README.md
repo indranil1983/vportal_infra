@@ -1,6 +1,6 @@
-# Homelab Kubernetes — Automated Deployment
+# vplatform Kubernetes — Automated Deployment
 
-Automated 3-node Kubernetes homelab using **OpenTofu + KVM/libvirt + cloud-init + Ansible + Kubespray** on Ubuntu 24.04 LTS.
+Automated 3-node Kubernetes vplatform using **OpenTofu + KVM/libvirt + cloud-init + Ansible + Kubespray** on Ubuntu 24.04 LTS.
 
 ## Architecture
 
@@ -51,14 +51,14 @@ bash scripts/deploy.sh
 ### 3. Use the cluster
 
 ```bash
-export KUBECONFIG=~/.kube/config-homelab
+export KUBECONFIG=~/.kube/config-vplatform
 kubectl get nodes -o wide
 ```
 
 ## Project Structure
 
 ```
-homelab-k8s/
+vplatform-k8s/
 ├── opentofu/
 │   ├── main.tf                        # VM resource definitions
 │   ├── variables.tf                   # Configurable parameters

@@ -1,10 +1,33 @@
 #!/bin/bash
 # =============================================================================
-# Homelab K8s - Full Deploy Script
-# Order: OpenTofu → Pre-flight Ansible → Kubespray
+# vplatform K8s - Full Deploy Script
+# Order: SSH Key Gen → OpenTofu → Pre-flight Ansible → Kubespray
 # =============================================================================
 
 set -euo pipefail
+
+REAL_USER="${SUDO_USER:-$(whoami)}"
+REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+
+
+# --- User Configuration Variables ---
+HOME_LOC="$REAL_HOME"
+SSH_KEY_NAME="id_rsa"
+USER_EMAIL="$REAL_USER@gmail.com"
+MASTER_IP="192.168.122.10" 
+CURR_PWD_LOC=$(pwd)
+IMAGES_DIR="$REAL_HOME"/virtual_machines/disks
+
+SSH_KEY_PATH="$HOME_LOC/.ssh/$SSH_KEY_NAME"
+LOCAL_KUBE_DIR="$HOME_LOC/.kube"
+LOCAL_KUBECONFIG_PATH="$LOCAL_KUBE_DIR/config-vplatform"
+# ------------------------------------
+
+export TF_VAR_ssh_key_path="$SSH_KEY_PATH"
+export TF_VAR_ssh_public_key_path="$SSH_KEY_PATH".pub
+export TF_VAR_pool_path="$IMAGES_DIR"
+
+
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -36,7 +59,7 @@ usage() {
   exit 0
 }
 
-SKIP_TOFU=true
+SKIP_TOFU=false
 SKIP_PREFLIGHT=false
 SKIP_KUBESPRAY=false
 DESTROY=false
@@ -51,6 +74,13 @@ for arg in "$@"; do
   esac
 done
 
+if [ -n "${SUDO_USER:-}" ]; then
+    echo "This script is run with sudo by: $SUDO_USER"
+    echo "The User ID is: $SUDO_UID"
+else
+    echo "This script was run normally by: $(whoami)"
+fi
+
 # =============================================================================
 # Destroy mode
 # =============================================================================
@@ -62,15 +92,59 @@ if $DESTROY; then
   exit 0
 fi
 
+
+
 # =============================================================================
 # Step 1: OpenTofu — Provision VMs
 # =============================================================================
 if ! $SKIP_TOFU; then
+
+  # =============================================================================
+  # Step 1.1: Ensure SSH Key Exists
+  # =============================================================================
+  log_step "Step 0 — SSH: Checking for identity keys"
+  mkdir -p "$HOME_LOC/.ssh"
+  chmod 700 "$HOME_LOC/.ssh"
+
+  if [ -f "$SSH_KEY_PATH" ]; then
+      log_info "SSH key already exists at: $SSH_KEY_PATH"
+  else
+      log_info "Generating new SSH key: $SSH_KEY_NAME"
+      ssh-keygen -t rsa -b 4096 -C "$USER_EMAIL" -f "$SSH_KEY_PATH" -N ""
+      chmod 600 "$SSH_KEY_PATH"
+      chmod 644 "$SSH_KEY_PATH.pub"
+      log_success "SSH key generated successfully"
+  fi
+
+  # =============================================================================
+  # Step 1.2: SETUP NW Bridge
+  # =============================================================================
+  # Define the network from your XML file (assuming it's saved as default.xml)
+  virsh net-define "$CURR_PWD_LOC"/scripts/vplatform_nw.xml
+
+  # Set to start automatically on host boot
+  virsh net-autostart vplatform_nw
+
+  # Start the network
+  virsh net-start vplatform_nw
+  
+  # =============================================================================
+  # Step 1.2: Tofu Provisioning
+  # =============================================================================
+
   log_step "Step 1/3 — OpenTofu: Provisioning VMs"
+
+  mkdir -p "$TF_VAR_pool_path"
 
   cd "$PROJECT_ROOT/opentofu"
   log_info "Running: tofu init"
   tofu init -upgrade
+
+  # --- BOOTSTRAP START ---
+  log_info "Bootstrapping storage pool to prevent 'Pool Not Found' errors..."
+  # We apply ONLY the pool first. This makes it exist so the next 'plan' doesn't crash.
+  tofu apply -target=libvirt_pool.vplatform_pool -auto-approve
+  # --- BOOTSTRAP END ---
 
   log_info "Running: tofu validate"
   tofu validate
@@ -84,7 +158,7 @@ if ! $SKIP_TOFU; then
   log_success "VMs provisioned"
 
   # Wait for VMs to finish cloud-init
-  log_info "Waiting 60s for cloud-init to complete on VMs..."
+  log_info "Waiting 90s for cloud-init to complete on VMs..."
   sleep 90
 else
   log_warn "Skipping OpenTofu (--skip-tofu)"
@@ -98,9 +172,11 @@ if ! $SKIP_PREFLIGHT; then
 
   source "$VENV/bin/activate"
 
+  # Note: Ensure your hosts.yml uses the correct private_key_file path
   ansible-playbook \
     -i "$PROJECT_ROOT/kubespray-config/inventory/hosts.yml" \
     "$PROJECT_ROOT/ansible/preflight.yml" \
+    --private-key="$SSH_KEY_PATH" \
     -v
 
   log_success "All nodes passed pre-flight checks"
@@ -136,32 +212,71 @@ if ! $SKIP_KUBESPRAY; then
   ansible-playbook \
     -i "$KUBESPRAY_INVENTORY/hosts.yml" \
     "$KUBESPRAY_DIR/cluster.yml" \
+    --private-key="$SSH_KEY_PATH" \
     --become \
     --become-user=root \
     -v
 
   deactivate
   log_success "Kubernetes cluster installed!"
-
+else
+  log_warn "Skipping Kubespray (--skip-kubespray)"
+fi
   # =============================================================================
   # Fetch kubeconfig
   # =============================================================================
   log_step "Fetching kubeconfig from master"
-  MASTER_IP="192.168.122.10"
-  mkdir -p ~/.kube
+  
+  if ! command -v kubectl &> /dev/null; then
+    log_warn "kubectl not found. Installing now..."
+    
+    # Download the latest stable release binary
+    K8S_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+    curl -LO "https://dl.k8s.io/release/${K8S_VERSION}/bin/linux/amd64/kubectl"
+    
+    # Install it to /usr/local/bin
+    sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    
+    # Clean up the downloaded file
+    rm kubectl
+    log_success "kubectl version ${K8S_VERSION} installed successfully."
+  else
+      log_info "kubectl is already installed ($(kubectl version --client --short 2>/dev/null || echo 'version unknown'))"
+  fi
 
-  scp -i ~/.ssh/id_rsa \
-      -o StrictHostKeyChecking=no \
-      ubuntu@"$MASTER_IP":/home/ubuntu/.kube/config \
-      ~/.kube/config-homelab 2>/dev/null || \
-  scp -i ~/.ssh/id_rsa \
-      -o StrictHostKeyChecking=no \
-      ubuntu@"$MASTER_IP":/etc/kubernetes/admin.conf \
-      ~/.kube/config-homelab
 
-  export KUBECONFIG=~/.kube/config-homelab
+  mkdir -p "$LOCAL_KUBE_DIR"
+
+  # Use SSH to stream config. If home-dir file missing, use sudo to get admin.conf
+  if ssh -i "$SSH_KEY_PATH" -o StrictHostKeyChecking=no ubuntu@"$MASTER_IP" \
+     "sudo cat /etc/kubernetes/admin.conf 2>/dev/null || cat ~/.kube/config 2>/dev/null" > "$LOCAL_KUBECONFIG_PATH"; then
+      
+      # Correct the API server IP (replace 127.0.0.1 with the actual Master VM IP)
+      sed -i "s/127.0.0.1/$MASTER_IP/g" "$LOCAL_KUBECONFIG_PATH"
+      log_success "Kubeconfig saved to $LOCAL_KUBECONFIG_PATH"
+  else
+      log_warn "Could not fetch kubeconfig automatically. You may need to fetch it manually."
+  fi
+
+  # =============================================================================
+  # Test deployment of pods
+  # =============================================================================
+
   log_info "Testing cluster connectivity..."
-  kubectl get nodes -o wide
+  log_info "Running test as local user  $REAL_USER..."
+  su - "$SUDO_USER" -c "export KUBECONFIG=$LOCAL_KUBECONFIG_PATH"
+  su - "$SUDO_USER" -c "kubectl get nodes -o wide"
+  
+
+  log() { echo -e "${CYAN}[TEST]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# --- Pre-flight Check ---
+if [ ! -f "$LOCAL_KUBECONFIG_PATH" ]; then
+    error "Kubeconfig not found at $LOCAL_KUBECONFIG_PATH. Please run deploy.sh first."
+else 
+    su - "$SUDO_USER" -c "bash $PWD/scripts/function_test.sh"
+fi
 
   echo ""
   echo -e "${GREEN}=============================================================${NC}"
@@ -169,9 +284,11 @@ if ! $SKIP_KUBESPRAY; then
   echo -e "${GREEN}=============================================================${NC}"
   echo ""
   echo -e "  To use kubectl:"
-  echo -e "  ${YELLOW}export KUBECONFIG=~/.kube/config-homelab${NC}"
+  echo -e "  ${YELLOW}export KUBECONFIG=$LOCAL_KUBECONFIG_PATH${NC}"
   echo -e "  ${YELLOW}kubectl get nodes${NC}"
+  echo -e "  To see your VM configuration and state use: tofu show
   echo ""
-else
-  log_warn "Skipping Kubespray (--skip-kubespray)"
-fi
+
+
+
+

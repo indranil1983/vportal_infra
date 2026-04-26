@@ -7,13 +7,13 @@ variable "libvirt_uri" {
 variable "pool_name" {
   description = "Libvirt storage pool name"
   type        = string
-  default     = "homelab-pool"
+  default     = "vplatform_pool"
 }
 
 variable "pool_path" {
   description = "Path on host for VM disk storage"
   type        = string
-  default     = "/home/echindr/project/vportal_hdd"
+  default     = "/home/echindr/virtual_machines/disks"
 }
 
 variable "ubuntu_image_url" {
@@ -31,13 +31,12 @@ variable "vm_user" {
 variable "ssh_public_key_path" {
   description = "Path to SSH public key injected into VMs"
   type        = string
-  default     = "/home/echindr/.ssh/id_rsa.pub"
 }
 
 variable "libvirt_network" {
   description = "Libvirt network name"
   type        = string
-  default     = "default"
+  default     = "vplatform_nw"
 }
 
 variable "gateway" {
@@ -52,6 +51,11 @@ variable "dns_server" {
   default     = "8.8.8.8"
 }
 
+variable "ssh_key_path" {
+  type        = string
+  description = "Path to the private SSH key"
+}
+
 variable "vms" {
   description = "Map of VM definitions"
   type = map(object({
@@ -63,21 +67,21 @@ variable "vms" {
   }))
   default = {
     "k8s-master" = {
-      vcpu      = 1
+      vcpu      = 2
       memory_mb = 3072
       disk_size = 21474836480   # 20GB in bytes
       ip        = "192.168.122.10"
       role      = "master"
     }
     "k8s-worker-1" = {
-      vcpu      = 1
+      vcpu      = 2
       memory_mb = 3072
       disk_size = 21474836480
       ip        = "192.168.122.11"
       role      = "worker"
     }
     "k8s-worker-2" = {
-      vcpu      = 1
+      vcpu      = 2
       memory_mb = 3072
       disk_size = 21474836480
       ip        = "192.168.122.12"

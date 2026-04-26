@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Homelab K8s - Version Audit Script
+# vplatform K8s - Version Audit Script
 # Checks installed software against the latest available upstream releases
 # =============================================================================
 
@@ -27,7 +27,7 @@ check_version() {
     echo ""
 }
 
-echo -e "${BLUE}--- Homelab Software Audit ---${NC}\n"
+echo -e "${BLUE}--- vplatform Software Audit ---${NC}\n"
 
 # 1. OpenTofu
 if command -v tofu &> /dev/null; then

@@ -1,9 +1,14 @@
 #!/bin/bash
 # =============================================================================
-# Homelab K8s - Host Setup Script (Official Manual Repo Method)
+# vplatform K8s - Host Setup Script (Official Manual Repo Method)
 # =============================================================================
 
 set -euo pipefail
+
+
+CURR_PWD_LOC=$(pwd)
+
+echo "Current work location is $CURR_PWD_LOC"
 
 # --- Logging Functions ---
 RED='\033[0;31m'
@@ -22,6 +27,8 @@ if [[ "$EUID" -ne 0 ]]; then
   log_error "Please run as root: sudo bash setup-host.sh"
 fi
 
+mkdir -p $CURR_PWD_LOC/temp
+
 # 1. Immediate APT Cleanup
 log_info "Cleaning up old/broken repository files..."
 rm -f /etc/apt/sources.list.d/opentofu.list
@@ -35,20 +42,7 @@ apt-get install -y -qq apt-transport-https ca-certificates curl gnupg lsb-releas
 # 3. OpenTofu (Manual Repository Method from Docs)
 log_info "Install OpenTofu..."
 
-# Download the installer script:
-wget --secure-protocol=TLSv1_2 --https-only https://get.opentofu.org/install-opentofu.sh -O install-opentofu.sh
-# Alternatively: wget --secure-protocol=TLSv1_2 --https-only https://get.opentofu.org/install-opentofu.sh -O install-opentofu.sh
-
-# Give it execution permissions:
-chmod +x install-opentofu.sh
-
-# Please inspect the downloaded script
-
-# Run the installer:
-./install-opentofu.sh --install-method deb
-
-# Remove the installer:
-rm -f install-opentofu.sh
+bash "$CURR_PWD_LOC"/scripts/install_opentofu.sh
 
 log_success "OpenTofu installed: $(tofu --version | head -n1)"
 

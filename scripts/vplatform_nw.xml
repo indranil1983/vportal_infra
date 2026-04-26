@@ -1,5 +1,5 @@
 <network>
-  <name>default</name>
+  <name>vplatform_nw</name>
   <forward mode='nat'/>
   <bridge name='virbr0' stale='yes'/>
   <ip address='192.168.122.1' netmask='255.255.255.0'>

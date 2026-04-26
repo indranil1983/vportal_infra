@@ -1,10 +1,23 @@
 #!/bin/bash
 # =============================================================================
-# Homelab K8s - Host UNINSTALL Script
+# vplatform K8s - Host UNINSTALL Script
 # Reverses all changes made by setup-host.sh
 # =============================================================================
 
 set -uo pipefail
+
+REAL_USER="${SUDO_USER:-$(whoami)}"
+REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+
+# --- User Configuration Variables ---
+HOME_LOC="$REAL_HOME"
+SSH_KEY_NAME="id_rsa"
+USER_EMAIL="$REAL_USER@gmail.com"
+MASTER_IP="192.168.122.10" 
+
+SSH_KEY_PATH="$HOME_LOC/.ssh/$SSH_KEY_NAME"
+LOCAL_KUBE_DIR="$HOME_LOC/.kube"
+LOCAL_CONFIG="$LOCAL_KUBE_DIR/config-vplatform"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -21,15 +34,7 @@ if [[ "$EUID" -ne 0 ]]; then
   log_error "Please run as root: sudo bash uninstall-host.sh"
 fi
 
-# =============================================================================
-# 1. OpenTofu Infrastructure Cleanup
-# =============================================================================
-log_info "Attempting to destroy OpenTofu managed VMs..."
-# Try to run destroy if the directory exists
-if command -v tofu &>/dev/null && [ -d "homelab-k8s" ]; then
-    cd homelab-k8s && tofu destroy -auto-approve || log_warn "Tofu destroy failed; perhaps resources were already gone."
-    cd ..
-fi
+
 
 # =============================================================================
 # 2. Remove Kubespray & Ansible Venv
@@ -47,9 +52,46 @@ log_success "Kubespray and Ansible removed"
 # =============================================================================
 log_info "Removing binaries and tools..."
 # OpenTofu
-apt-get purge -y opentofu || rm -f $(which tofu)
-rm -f /etc/apt/sources.list.d/opentofu.list
-rm -f /etc/apt/keyrings/opentofu.gpg
+# --- Configuration ---
+echo "--- Starting OpenTofu Deep Uninstall ---"
+
+# 1. Uninstall via Package Managers
+echo "[1/4] Removing packages via apt..."
+sudo apt remove --purge -y tofu opentofu &>/dev/null || true
+sudo apt autoremove -y &>/dev/null || true
+
+# 2. Clean up Binaries and Symlinks
+echo "[2/4] Searching for manual binaries and symlinks..."
+# This targets common locations where manual installs or links might hide
+FILES_TO_REMOVE=(
+    "/usr/bin/tofu"
+    "/usr/local/bin/tofu"
+    "/usr/bin/opentofu"
+    "/usr/local/bin/opentofu"
+)
+
+for file in "${FILES_TO_REMOVE[@]}"; do
+    if [ -f "$file" ] || [ -L "$file" ]; then
+        echo "Removing: $file"
+        sudo rm -f "$file"
+    fi
+done
+
+# 3. Remove Local Configuration & Cache
+echo "[3/4] Cleaning local data and plugins..."
+# This removes provider caches (~/.terraform.d is used by Tofu for compatibility)
+rm -rf "$HOME/.opentofu"
+rm -rf "$HOME/.terraform.d"
+
+# 4. Refresh Shell Environment
+echo "[4/4] Finalizing shell state..."
+# Force the shell to forget 'tofu' or 'opentofu' ever existed
+hash -r
+
+echo "------------------------------------------------"
+echo "SUCCESS: OpenTofu has been fully removed."
+echo "Check: Run 'which tofu' to verify (should be empty)."
+echo "------------------------------------------------"
 
 # kubectl
 rm -f /usr/local/bin/kubectl
@@ -83,12 +125,12 @@ log_success "Virtualization stack removed"
 # 5. SSH Key Cleanup
 # =============================================================================
 log_info "Removing generated SSH keys..."
-rm -f "/root/.ssh/id_rsa" "/root/.ssh/id_rsa.pub"
+rm -f "$SSH_KEY_PATH" "$SSH_KEY_PATH.pub"
 
 SUDO_USER_NAME="${SUDO_USER:-$(logname 2>/dev/null || echo '')}"
 if [[ -n "$SUDO_USER_NAME" ]]; then
   USER_HOME=$(getent passwd "$SUDO_USER_NAME" | cut -d: -f6)
-  rm -f "$USER_HOME/.ssh/id_rsa" "$USER_HOME/.ssh/id_rsa.pub"
+  rm -f "$USER_HOME/.ssh/$SSH_KEY_NAME" "$USER_HOME/.ssh/$SSH_KEY_NAME.pub"
   log_success "SSH keys removed from root and $SUDO_USER_NAME"
 fi
 
