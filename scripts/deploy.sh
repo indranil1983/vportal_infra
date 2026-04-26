@@ -319,7 +319,7 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 if [ ! -f "$LOCAL_KUBECONFIG_PATH" ]; then
     error "Kubeconfig not found at $LOCAL_KUBECONFIG_PATH. Please run deploy.sh first."
 else 
-    su - "$SUDO_USER" -c "bash $PWD/scripts/function_test.sh"
+    su - "$SUDO_USER" -c "bash $CURR_PWD_LOC/scripts/function_test.sh"
 fi
 
   echo ""

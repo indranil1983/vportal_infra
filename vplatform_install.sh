@@ -13,6 +13,9 @@ export SCRIPTS_DIR="$CURR_PWD_LOC/scripts"
 export SSH_KEY_PATH="$REAL_HOME/.ssh/id_rsa"
 export LOCAL_KUBECONFIG_PATH="$REAL_HOME/.kube/config-vplatform"
 
+# Start the timer
+START_TIME=$SECONDS
+
 # UI Colors
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -69,6 +72,16 @@ if [ -f "$SCRIPTS_DIR/deploy.sh" ]; then
     bash "$SCRIPTS_DIR/deploy.sh"
 fi
 
+# =============================================================================
+# TIME CALCULATION
+# =============================================================================
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
+
+# Format the time into MMm SSs
+MINUTES=$((ELAPSED_TIME / 60))
+SECONDS_REMAINDER=$((ELAPSED_TIME % 60))
+
 echo -e "\n${GREEN}================================================================${NC}"
 echo -e "${GREEN}  INSTALLATION COMPLETE: V-PLATFORM IS LIVE ${NC}"
+echo -e "${GREEN}  TOTAL TIME TAKEN: ${MINUTES}m ${SECONDS_REMAINDER}s${NC}"
 echo -e "${GREEN}================================================================${NC}\n"
