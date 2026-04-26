@@ -74,7 +74,7 @@ sudo -u "$REAL_USER" kubectl --kubeconfig="$LOCAL_KUBECONFIG_PATH" wait --for=co
 # 3. Print the logs (The Hello World)
 echo -e "\n${GREEN}==========================================${NC}"
 echo -ne "${GREEN}  RESULT: ${NC}"
-sudo -u "$REAL_USER" kubectl --kubeconfig="$LOCAL_KUBECONFIG_PATH"  logs test-hello
+sudo -u "$REAL_USER" kubectl --kubeconfig="$LOCAL_KUBECONFIG_PATH" -n test-ns  logs test-hello
 echo -e "${GREEN}==========================================${NC}\n"
 
 # 5. Verify and cleanup hint
