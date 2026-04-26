@@ -309,8 +309,7 @@ fi
 
   log_info "Testing cluster connectivity..."
   log_info "Running test as local user  $REAL_USER..."
-  su - "$SUDO_USER" -c "export KUBECONFIG=$LOCAL_KUBECONFIG_PATH"
-  su - "$SUDO_USER" -c "kubectl get nodes -o wide"
+  su - "$SUDO_USER" -c "export KUBECONFIG=$LOCAL_KUBECONFIG_PATH && kubectl get nodes -o wide"
   
 
   log() { echo -e "${CYAN}[TEST]${NC} $1"; }
