@@ -69,7 +69,17 @@ done
 # ── 4. Refresh pool ───────────────────────────────────────────────────────────
 echo ""
 echo "♻️  [4/5] Refreshing libvirt storage pool..."
-sudo virsh pool-refresh "$POOL_NAME" && echo "  ✓ pool refreshed"
+
+if command -v virsh >/dev/null 2>&1; then
+    if virsh pool-list --all --name | grep -q "^$POOL_NAME$"; then
+        sudo virsh pool-refresh "$POOL_NAME" >/dev/null 2>&1
+        echo "  ✓ pool $POOL_NAME refreshed"
+    else
+        echo "  ! pool $POOL_NAME not found, skipping refresh"
+    fi
+else
+    echo "  ! virsh not available, skipping pool refresh"
+fi
 
 # ── 5. Wipe tofu state ────────────────────────────────────────────────────────
 echo ""
