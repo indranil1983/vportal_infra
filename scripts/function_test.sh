@@ -71,6 +71,12 @@ sudo -u "$REAL_USER" kubectl --kubeconfig="$LOCAL_KUBECONFIG_PATH" wait --for=co
     -n test-ns \
     --timeout=90s
 
+# 3. Print the logs (The Hello World)
+echo -e "\n${GREEN}==========================================${NC}"
+echo -ne "${GREEN}  RESULT: ${NC}"
+kubectl logs test-hello
+echo -e "${GREEN}==========================================${NC}\n"
+
 # 5. Verify and cleanup hint
 echo -e "\n${GREEN}✅ TEST SUCCESSFUL${NC}"
 log "Current Pods in test-ns:"
