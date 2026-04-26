@@ -11,7 +11,7 @@ REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
 # --- User Configuration Variables ---
 HOME_LOC="$REAL_HOME"
-SSH_KEY_NAME="id_rsa"
+SSH_KEY_NAME="id_vportal_rsa"
 USER_EMAIL="$REAL_USER@gmail.com"
 MASTER_IP="192.168.122.10" 
 

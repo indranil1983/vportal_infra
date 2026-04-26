@@ -12,7 +12,7 @@ REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 
 # --- User Configuration Variables ---
 HOME_LOC="$REAL_HOME"
-SSH_KEY_NAME="id_rsa"
+SSH_KEY_NAME="id_vportal_rsa"
 USER_EMAIL="$REAL_USER@gmail.com"
 MASTER_IP="192.168.122.10" 
 CURR_PWD_LOC=$(pwd)
@@ -26,7 +26,7 @@ LOCAL_KUBECONFIG_PATH="$LOCAL_KUBE_DIR/config-vplatform"
 export TF_VAR_ssh_key_path="$SSH_KEY_PATH"
 export TF_VAR_ssh_public_key_path="$SSH_KEY_PATH".pub
 export TF_VAR_pool_path="$IMAGES_DIR"
-
+export ANSIBLE_SSH_KEY_PATH="$SSH_KEY_PATH"
 
 
 RED='\033[0;31m'
@@ -111,22 +111,36 @@ if ! $SKIP_TOFU; then
   else
       log_info "Generating new SSH key: $SSH_KEY_NAME"
       ssh-keygen -t rsa -b 4096 -C "$USER_EMAIL" -f "$SSH_KEY_PATH" -N ""
+      # FIX: Change ownership to the real user
+      chown "$REAL_USER":"$REAL_USER" "$SSH_KEY_PATH" "$SSH_KEY_PATH.pub"
       chmod 600 "$SSH_KEY_PATH"
       chmod 644 "$SSH_KEY_PATH.pub"
       log_success "SSH key generated successfully"
+
   fi
 
   # =============================================================================
   # Step 1.2: SETUP NW Bridge
   # =============================================================================
   # Define the network from your XML file (assuming it's saved as default.xml)
-  virsh net-define "$CURR_PWD_LOC"/scripts/vplatform_nw.xml
+ # Check if the network is already defined
+  if ! virsh net-info vplatform_nw >/dev/null 2>&1; then
+      log_info "Defining network: vplatform_nw"
+      virsh net-define "$CURR_PWD_LOC"/scripts/vplatform_nw.xml
+  else
+      log_info "Network vplatform_nw is already defined."
+  fi
 
-  # Set to start automatically on host boot
-  virsh net-autostart vplatform_nw
-
-  # Start the network
-  virsh net-start vplatform_nw
+  # Check if the network is active
+  if [[ $(virsh net-info vplatform_nw | grep "Active" | awk '{print $2}') == "no" ]]; then
+      log_info "Starting network: vplatform_nw"
+      virsh net-start vplatform_nw
+      virsh net-autostart vplatform_nw
+      # Small sleep to let the bridge interface settle
+      sleep 2
+  else
+      log_info "Network vplatform_nw is already active."
+  fi
   
   # =============================================================================
   # Step 1.2: Tofu Provisioning
@@ -158,8 +172,24 @@ if ! $SKIP_TOFU; then
   log_success "VMs provisioned"
 
   # Wait for VMs to finish cloud-init
-  log_info "Waiting 90s for cloud-init to complete on VMs..."
-  sleep 90
+  log_info "Waiting for VMs to be reachable via SSH..."
+
+  # Maximum number of attempts (e.g., 30 attempts * 5 seconds = 150 seconds max)
+  MAX_RETRIES=30
+  COUNT=0
+  until ssh -i "$SSH_KEY_PATH" -o ConnectTimeout=2 -o StrictHostKeyChecking=no ubuntu@"$MASTER_IP" \
+    "lsmod | grep -q 'overlay' && lsmod | grep -q 'br_netfilter'" 2>/dev/null; do
+    
+    if [ $COUNT -ge $MAX_RETRIES ]; then
+        log_error "Kernel modules (overlay/br_netfilter) failed to load on $MASTER_IP."
+    fi
+    
+    echo -ne "  Waiting for network overlay on $MASTER_IP... ($(($COUNT + 1))/$MAX_RETRIES)\r"
+    sleep 5
+    COUNT=$((COUNT + 1))
+  done
+
+log_success "Overlay and br_netfilter are active."
 else
   log_warn "Skipping OpenTofu (--skip-tofu)"
 fi

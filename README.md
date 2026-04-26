@@ -125,7 +125,7 @@ The host can reach VMs directly; VMs reach the internet via NAT.
 ## SSH Access
 
 ```bash
-ssh -i ~/.ssh/id_rsa ubuntu@192.168.122.10   # master
-ssh -i ~/.ssh/id_rsa ubuntu@192.168.122.11   # worker-1
-ssh -i ~/.ssh/id_rsa ubuntu@192.168.122.12   # worker-2
+ssh -i ~/.ssh/id_vportal_rsa ubuntu@192.168.122.10   # master
+ssh -i ~/.ssh/id_vportal_rsa ubuntu@192.168.122.11   # worker-1
+ssh -i ~/.ssh/id_vportal_rsa ubuntu@192.168.122.12   # worker-2
 ```

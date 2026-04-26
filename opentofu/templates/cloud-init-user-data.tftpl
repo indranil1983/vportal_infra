@@ -10,7 +10,10 @@ users:
     shell: /bin/bash
     ssh_authorized_keys:
       - ${ssh_pubkey}
-
+# chpasswd:
+#   list: |
+#     ${username}:ubuntu
+#   expire: False
 # Disable password auth, enforce key-based SSH
 ssh_pwauth: false
 disable_root: true
