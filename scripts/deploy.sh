@@ -297,6 +297,7 @@ fi
       
       # Correct the API server IP (replace 127.0.0.1 with the actual Master VM IP)
       sed -i "s/127.0.0.1/$MASTER_IP/g" "$LOCAL_KUBECONFIG_PATH"
+      sed -i "s/localhost/$MASTER_IP/g" "$LOCAL_KUBECONFIG_PATH"
       log_success "Kubeconfig saved to $LOCAL_KUBECONFIG_PATH"
   else
       log_warn "Could not fetch kubeconfig automatically. You may need to fetch it manually."
