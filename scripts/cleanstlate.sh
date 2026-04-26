@@ -94,6 +94,24 @@ else
     echo "[SKIP] Network '$NETWORK_NAME' does not exist."
 fi
 
+log_step "Cleaning up SSH known_hosts"
+
+# Define your VM IPs
+VM_IPS=("$MASTER_IP" "192.168.122.11" "192.168.122.12")
+
+for IP in "${VM_IPS[@]}"; do
+    log_info "Removing $IP from known_hosts..."
+
+    # 1. Remove from the current user (Root, since you're running with sudo)
+    ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$IP" 2>/dev/null || true
+
+    # 2. Remove from the Real User (the sudoer)
+    # We use sudo -u to run the command as the specific user
+    sudo -u "$REAL_USER" ssh-keygen -f "$REAL_HOME/.ssh/known_hosts" -R "$IP" 2>/dev/null || true
+done
+
+log_success "Known hosts cleared for both root and $REAL_USER."
+
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "✅ Clean complete. Current libvirt state:"
