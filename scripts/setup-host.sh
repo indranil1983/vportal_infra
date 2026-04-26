@@ -73,4 +73,42 @@ fi
 ln -sf "$VENV_DIR/bin/ansible" /usr/local/bin/ansible
 ln -sf "$VENV_DIR/bin/ansible-playbook" /usr/local/bin/ansible-playbook
 
+############ update qemu conf access ################
+
+log_step "Configuring QEMU Permissions (Prepending to top of file)"
+
+QEMU_CONF="/etc/libvirt/qemu.conf"
+TEMP_CONF=$(mktemp)
+
+# Define the lines we want to ensure exist
+read -r -d '' NEW_CONFIG << EOM || true
+user = "root"
+group = "root"
+security_driver = "none"
+EOM
+
+# Check if the configuration already exists anywhere in the file
+# We check for 'security_driver = "none"' as a unique indicator
+if grep -q "security_driver = \"none\"" "$QEMU_CONF"; then
+    log_info "QEMU permissions already configured. Skipping."
+else
+    log_info "Prepending root permissions to $QEMU_CONF"
+    
+    # Create the new file: [New Config] + [Old File Content]
+    echo "$NEW_CONFIG" > "$TEMP_CONF"
+    cat "$QEMU_CONF" >> "$TEMP_CONF"
+    
+    # Move temp file to actual config with correct permissions
+    sudo cp "$TEMP_CONF" "$QEMU_CONF"
+    sudo chmod 644 "$QEMU_CONF"
+    
+    log_info "Restarting libvirtd to apply changes..."
+    sudo systemctl restart libvirtd
+    log_success "QEMU is now running as root with security drivers disabled."
+fi
+
+rm -f "$TEMP_CONF"
+
+##################################################################################
+
 log_success "Setup complete! Please log out and back in."
