@@ -134,9 +134,11 @@ log_success "Known hosts cleared for both root and $REAL_USER."
 echo ""
 echo "✅ Clean complete. Current libvirt state:"
 echo ""
-sudo virsh list --all
-echo ""
-sudo virsh vol-list --pool "$POOL_NAME"
+if command -v virsh >/dev/null 2>&1; then
+  sudo virsh list --all
+  echo ""
+  sudo virsh vol-list --pool "$POOL_NAME"
+fi
 echo ""
 echo "👉 Ready to run: ./scripts/deploy.sh"
 echo ""
