@@ -330,7 +330,7 @@ fi
   echo -e "  To use kubectl:"
   echo -e "  ${YELLOW}export KUBECONFIG=$LOCAL_KUBECONFIG_PATH${NC}"
   echo -e "  ${YELLOW}kubectl get nodes${NC}"
-  echo -e "  To see your VM configuration and state use: cd opentofu && tofu show
+  echo -e "  To see your VM configuration and state use: cd opentofu && tofu show"
 
 
 
