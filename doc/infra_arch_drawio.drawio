@@ -1,0 +1,121 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="eYpGQ8RwgVkMlCUh9jbF">
+    <mxGraphModel dx="349848" dy="226293" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rIywizR6P5v9GYcgQfcR-23" edge="1" parent="1" source="github_repo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="argo_icon">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="github_repo" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontStyle=1" value="Github repo" vertex="1">
+          <mxGeometry height="50" width="110" x="530" y="-6061" as="geometry" />
+        </mxCell>
+        <mxCell id="user_layer" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="USER / ADMIN" vertex="1">
+          <mxGeometry height="60" width="30" x="46" y="-6267" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-30" edge="1" parent="1" source="master_script" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="script_chain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="master_script" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=14;" value="1. install_vplatform.sh&lt;br&gt;(Global Orchestrator)" vertex="1">
+          <mxGeometry height="70" width="320" x="-92" y="-6167" as="geometry" />
+        </mxCell>
+        <mxCell id="script_chain" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;startSize=25;" value="Installer Script Sequence" vertex="1">
+          <mxGeometry height="130" width="760" x="-312" y="-6061" as="geometry" />
+        </mxCell>
+        <mxCell id="s_provision" parent="script_chain" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;" value="2.1 cleanslate.sh&amp;nbsp;" vertex="1">
+          <mxGeometry height="55" width="120" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="s_k8s" parent="script_chain" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;" value="2. 2 unsetup.sh" vertex="1">
+          <mxGeometry height="55" width="120" x="160" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="s_argo" parent="script_chain" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;" value="2.3 setup_gitops.sh&lt;br&gt;(Installs ArgoCD)" vertex="1">
+          <mxGeometry height="60" width="140" x="540" y="42.5" as="geometry" />
+        </mxCell>
+        <mxCell id="seq1" edge="1" parent="script_chain" source="s_provision" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="s_k8s" value="" />
+        <mxCell id="seq2" edge="1" parent="script_chain" source="s_k8s" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="s_argo" value="" />
+        <mxCell id="rIywizR6P5v9GYcgQfcR-20" parent="script_chain" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;" value="2. 3 deploy.sh" vertex="1">
+          <mxGeometry height="55" width="130" x="320" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="f_user" edge="1" parent="1" source="user_layer" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="master_script" value="" />
+        <mxCell id="f_master" edge="1" parent="1" source="master_script" style="endArrow=classic;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="script_chain" value="" />
+        <mxCell id="server_a" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;startSize=30;fontSize=14;fontStyle=1;" value="SERVER A (Libvirt / KVM Host)" vertex="1">
+          <mxGeometry height="250" width="750" x="-302" y="-5871" as="geometry" />
+        </mxCell>
+        <mxCell id="m1" parent="server_a" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="K8s Master Node&lt;br&gt;(Ubuntu VM)" vertex="1">
+          <mxGeometry height="80" width="180" x="30" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="w1" parent="server_a" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="K8s Worker Node 1&lt;br&gt;(Ubuntu VM)" vertex="1">
+          <mxGeometry height="80" width="180" x="285" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="w2" parent="server_a" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="K8s Worker Node 2&lt;br&gt;(Ubuntu VM)" vertex="1">
+          <mxGeometry height="80" width="180" x="510" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="argo_icon" parent="server_a" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f0a30a;fontColor=#000000;strokeColor=#BD7000;fontStyle=1;fontSize=11;" value="ArgoCD&lt;br&gt;GitOps Engine" vertex="1">
+          <mxGeometry height="60" width="100" x="620" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-31" parent="server_a" style="rounded=1;whiteSpace=wrap;html=1;" value="Sonarqube" vertex="1">
+          <mxGeometry height="49" width="93" x="652" y="141" as="geometry" />
+        </mxCell>
+        <mxCell id="server_b" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;startSize=30;" value="SERVER B (External Persistence Host)" vertex="1">
+          <mxGeometry height="200" width="750" x="-302" y="-5541" as="geometry" />
+        </mxCell>
+        <mxCell id="db" parent="server_b" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="PostgreSQL" vertex="1">
+          <mxGeometry height="100" width="130" x="180" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="server_b" style="shape=module;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="S3 Storage" vertex="1">
+          <mxGeometry height="100" width="160" x="440" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="data_flow" edge="1" parent="1" source="server_b" style="endArrow=classic;startArrow=classic;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;dashed=1;strokeColor=#FF0000;fontStyle=1;fontSize=12" target="server_a" value="Application Data Persistence">
+          <mxGeometry height="50" relative="1" width="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-21" edge="1" parent="1" source="rIywizR6P5v9GYcgQfcR-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="server_a">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-26" connectable="0" parent="rIywizR6P5v9GYcgQfcR-21" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Provision &amp;amp; Install K8s stack" vertex="1">
+          <mxGeometry relative="1" x="0.0444" y="-3" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-22" edge="1" parent="1" source="s_argo" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="argo_icon">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-25" edge="1" parent="1" source="rIywizR6P5v9GYcgQfcR-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" target="argo_icon">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-24" parent="1" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;fontStyle=1" value="Docker Hub" vertex="1">
+          <mxGeometry height="50" width="110" x="530" y="-5990" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-32" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="720" y="-5219" as="sourcePoint" />
+            <mxPoint x="720" y="-6340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-33" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;h1&gt;Cloud&amp;nbsp;&lt;/h1&gt;&lt;h1&gt;VPS&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="211" width="600" x="770" y="-5860" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-34" parent="1" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="" vertex="1">
+          <mxGeometry height="29" width="260" x="480" y="-5760.5" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-36" parent="1" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="" vertex="1">
+          <mxGeometry height="29" width="260" x="480" y="-5440" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-37" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;h1&gt;3rd Party Managed Storage&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="211" width="600" x="770" y="-5546.5" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-38" parent="1" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Production&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="57" width="140" x="970" y="-6217" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-40" parent="1" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;STAGING&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="37" width="140" x="410" y="-6220" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-42" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=none;strokeColor=light-dark(#000000,#FF0000);" value="" vertex="1">
+          <mxGeometry height="840" width="730" x="730" y="-6070" as="geometry" />
+        </mxCell>
+        <mxCell id="rIywizR6P5v9GYcgQfcR-43" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Preferably SAME CLOUD PROVIDER" vertex="1">
+          <mxGeometry height="73" width="125" x="1007.5" y="-6004" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
