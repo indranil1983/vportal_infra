@@ -5,7 +5,7 @@
 set -e
 POOL_NAME="vplatform_pool"
 IMAGES_DIR="$REAL_HOME"/virtual_machines/disks
-TOFU_DIR="$(dirname "$0")/../tofu"
+TOFU_DIR="$(dirname "$0")/../opentofu"
 VMS=(k8s-master k8s-worker-1 k8s-worker-2)
 VOLUMES=(ubuntu-base.qcow2 k8s-worker-2-root.qcow2 k8s-worker-1-root.qcow2 k8s-master-root.qcow2 k8s-master-cloudinit.iso k8s-worker-1-cloudinit.iso k8s-worker-2-cloudinit.iso)
 
@@ -84,10 +84,14 @@ fi
 # ── 5. Wipe tofu state ────────────────────────────────────────────────────────
 echo ""
 echo "📄 [5/5] Wiping OpenTofu state files..."
-for f in terraform.tfstate terraform.tfstate.backup .terraform.lock.hcl; do
-  FILE="$TOFU_DIR/$f"
-  if [ -f "$FILE" ]; then
-    rm -f "$FILE" && echo "  ✓ removed $FILE"
+
+# Add .opentofu to the list since you are using Tofu
+for f in terraform.tfstate terraform.tfstate.backup .terraform.lock.hcl .terraform .opentofu .opentofu.lock.hcl tfplan; do
+  TARGET="$TOFU_DIR/$f"
+  
+  if [ -e "$TARGET" ]; then
+    # -r is essential here to remove the .terraform directory
+    rm -rf "$TARGET" && echo "  ✓ removed $TARGET"
   fi
 done
 
