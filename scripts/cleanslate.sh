@@ -141,7 +141,7 @@ echo ""
 if command -v virsh >/dev/null 2>&1; then
   sudo virsh list --all
   echo ""
-  sudo virsh vol-list --pool "$POOL_NAME"
+  sudo virsh vol-list --pool "$POOL_NAME" 2>/dev/null || true
 fi
 echo ""
 echo "👉 Ready to run: ./scripts/deploy.sh"

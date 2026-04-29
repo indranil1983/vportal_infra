@@ -16,3 +16,5 @@ opentofu/terraform.tfstate
 opentofu/terraform.tfstate.backup
 opentofu/tfplan
 terraform.tfstate
+output/headlamp-token.txt
+vportal.zip

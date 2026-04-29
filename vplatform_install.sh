@@ -1,6 +1,6 @@
 #!/bin/bash
-set -e
 
+set -euo pipefail
 # =============================================================================
 # GLOBAL ENVIRONMENT & PATHS
 # =============================================================================
@@ -74,9 +74,9 @@ done
 
 # If no flags are passed, set all to true
 if [ $OPTIND -eq 1 ]; then
-    RUN_CLEAN=true
-    RUN_UNSETUP=true
-    RUN_SETUP=true
+    #RUN_CLEAN=true
+    #RUN_UNSETUP=true
+    #RUN_SETUP=true
     RUN_DEPLOY=true
     RUN_TEST=true
 fi
@@ -87,11 +87,11 @@ fi
 
 # PHASE 1: CLEANSLATE
 if [ "$RUN_CLEAN" = true ]; then
-    log_phase "cleanstlate.sh"
-    if [ -f "$SCRIPTS_DIR/cleanstlate.sh" ]; then
-        bash "$SCRIPTS_DIR/cleanstlate.sh"
+    log_phase "cleanslate.sh"
+    if [ -f "$SCRIPTS_DIR/cleanslate.sh" ]; then
+        bash "$SCRIPTS_DIR/cleanslate.sh"
     else
-        echo -e "${YELLOW}Warning: cleanstlate.sh not found.${NC}"
+        echo -e "${YELLOW}Warning: cleanslate.sh not found.${NC}"
     fi
 fi
 
@@ -116,6 +116,7 @@ if [ "$RUN_DEPLOY" = true ]; then
     log_phase "deploy.sh"
     if [ -f "$SCRIPTS_DIR/deploy.sh" ]; then
         bash "$SCRIPTS_DIR/deploy.sh"
+        bash "$SCRIPTS_DIR/deploy-headlamp.sh"
     fi
 fi
 
