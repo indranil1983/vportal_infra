@@ -40,26 +40,13 @@ fi
 # 2. Configure Nginx as a Reverse Proxy
 NGINX_CONF_FILE="/etc/nginx/sites-available/headlamp-proxy.conf"
 NGINX_SYMLINK_FILE="/etc/nginx/sites-enabled/headlamp-proxy.conf"
+LOCAL_PROXY_TEMPLATE="$PROJECT_ROOT/nginx/headlamp-proxy.conf"
 
-log_info "Creating Nginx reverse proxy configuration for Headlamp at $NGINX_CONF_FILE..."
-sudo bash -c "cat > '$NGINX_CONF_FILE' <<EOF
-server {
-    listen $HEADLAMP_PROXY_PORT;
-    server_name localhost; # Listen on localhost for Tailscale to pick up
-
-    location / {
-        proxy_pass http://$HEADLAMP_INGRESS_HOSTNAME;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        # WebSocket support for Headlamp
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection \"upgrade\";
-    }
-}
-EOF"
+log_info "Creating Nginx reverse proxy configuration for Headlamp using template $LOCAL_PROXY_TEMPLATE..."
+# Use sed instead of envsubst to avoid colliding with Nginx internal variables like $host
+sed -e "s|\\\${HEADLAMP_PROXY_PORT}|$HEADLAMP_PROXY_PORT|g" \
+    -e "s|\\\${HEADLAMP_INGRESS_HOSTNAME}|$HEADLAMP_INGRESS_HOSTNAME|g" \
+    "$LOCAL_PROXY_TEMPLATE" | sudo tee "$NGINX_CONF_FILE" > /dev/null
 
 if [ ! -L "$NGINX_SYMLINK_FILE" ]; then
     log_info "Enabling Nginx configuration..."
