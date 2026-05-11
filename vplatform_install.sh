@@ -6,29 +6,22 @@ set -euo pipefail
 # =============================================================================
 export REAL_USER=${SUDO_USER:-$USER}
 export REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
-export CURR_PWD_LOC=$(pwd)
-export SCRIPTS_DIR="$CURR_PWD_LOC/scripts"
 
+# Source global configuration
+CONFIG_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config.src"
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    echo -e "\033[0;31mError: Configuration file not found at $CONFIG_FILE. Exiting.\033[0m"
+    exit 1
+fi
 
-# Exporting shared variables for sub-scripts
-export SSH_KEY_PATH="$REAL_HOME/.ssh/id_rsa"
-export LOCAL_KUBECONFIG_PATH="$REAL_HOME/.kube/config-vplatform"
+# Ensure output directory exists and clear log file for a fresh run
+mkdir -p "$OUTPUT_DIR"
+> "$INSTALL_LOG_FILE"
 
 # Start the timer
 START_TIME=$SECONDS
-
-# UI Colors
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
-
-log_phase() {
-    echo -e "\n${CYAN}================================================================${NC}"
-    echo -e "${CYAN}  EXECUTING: $1 ${NC}"
-    echo -e "${CYAN}================================================================${NC}\n"
-}
 
 usage() {
     echo "Usage: sudo $0 [-c] [-u] [-s] [-d] [-t] [-h]"
@@ -41,12 +34,6 @@ usage() {
     echo "  (No arguments runs all phases in order)"
     exit 1
 }
-
-# 1. Root Check
-if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}Error: This script must be run as root (sudo).${NC}"
-  exit 1
-fi
 
 # 2. Permissions Check
 chmod +x "$SCRIPTS_DIR"/*.sh
