@@ -1,11 +1,13 @@
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
   name: headlamp
   namespace: headlamp
 spec:
-  ports:
-    - port: 8081
-      targetPort: 4466
   selector:
-    k8s-app: headlamp
+    app.kubernetes.io/name: headlamp # Must match your Pod labels
+  ports:
+    - protocol: TCP
+      port: 80         # Port the Service listens on
+      targetPort: 4466 # The actual port Headlamp runs on inside the container
+  type: ClusterIP

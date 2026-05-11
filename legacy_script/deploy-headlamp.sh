@@ -6,15 +6,17 @@
 set -euo pipefail
 
 # --- Ensure variables are set (inherited from main script) ---
-REAL_USER="${REAL_USER:-$(logname 2>/dev/null || echo $USER)}"
+REAL_USER="${SUDO_USER:-$(logname 2>/dev/null || echo $USER)}"
 REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
 PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 LOCAL_KUBECONFIG_PATH="${LOCAL_KUBECONFIG_PATH:-$REAL_HOME/.kube/config-vplatform}"
 OUTPUT_DIR="$PROJECT_ROOT/output"
+NGINX_NAMESPACE="ingress-nginx"
+HEADLAMP_NS="headlamp"
+HEADLAMP_INGRESS_NAME=$HEADLAMP_NS
 # Configuration
-IP_ADDR="127.0.0.1"
-HOSTNAME="headlamp.local"
 HOSTS_FILE="/etc/hosts"
+MASTER_IP="master" 
 
 echo -e "PROJECT_ROOT = $PROJECT_ROOT"
 
@@ -52,10 +54,10 @@ fi
 # =============================================================================
 log_step "Step 4 — Headlamp: UI Deployment"
 
-SERVICE_FILE="$PROJECT_ROOT/headlamp/service.yaml"
-SERVICE_ADMIN_FILE="$PROJECT_ROOT/headlamp/service-admin.yaml"
-DEPLOYMENT_FILE="$PROJECT_ROOT/headlamp/deployment.yaml"
-INGRESS_FILE="$PROJECT_ROOT/headlamp/ingress.yaml"
+SERVICE_FILE="$PROJECT_ROOT/$HEADLAMP_NS/service.yaml"
+SERVICE_ADMIN_FILE="$PROJECT_ROOT/$HEADLAMP_NS/service-admin.yaml"
+DEPLOYMENT_FILE="$PROJECT_ROOT/$HEADLAMP_NS/deployment.yaml"
+INGRESS_FILE="$PROJECT_ROOT/$HEADLAMP_NS/ingress.yaml"
 # Fix: Corrected syntax for file check
 if [ ! -f "$SERVICE_FILE" ]; then
     log_error "Ingress file not found at $SERVICE_FILE"
@@ -70,10 +72,10 @@ fi
 log_info "Installing Headlamp chart..."
 # Fix: Using sudo -u with explicitly passed variables to preserve environment
 sudo -u "$REAL_USER" bash -c "export KUBECONFIG='$LOCAL_KUBECONFIG_PATH'; \
-    helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/ && \
+    helm repo add $HEADLAMP_NS https://kubernetes-sigs.github.io/headlamp/ && \
     helm repo update && \
-    helm upgrade --install headlamp headlamp/headlamp \
-    --namespace headlamp --create-namespace -f $DEPLOYMENT_FILE -f $SERVICE_FILE"
+    helm upgrade --install $HEADLAMP_NS headlamp/headlamp \
+    --namespace $HEADLAMP_NS --create-namespace -f $DEPLOYMENT_FILE -f $SERVICE_FILE"
 
 
 # =============================================================================
@@ -89,44 +91,75 @@ sudo -u "$REAL_USER" bash -c "export KUBECONFIG='$LOCAL_KUBECONFIG_PATH'; kubect
 # Apply RBAC configuration
 sudo -u "$REAL_USER" bash -c "export KUBECONFIG='$LOCAL_KUBECONFIG_PATH'; kubectl apply -f '$SERVICE_ADMIN_FILE'"
 
+
+
 # Define the file path locally first
-TOKEN_FILE_PATH="$OUTPUT_DIR/headlamp-token.txt"
+TOKEN_FILE_PATH="$OUTPUT_DIR/$HEADLAMP_NS-output.txt"
 
 # Fix: Use the local variable to redirect output OUTSIDE the sudo string
-sudo -u "$REAL_USER" bash -c "export KUBECONFIG='$LOCAL_KUBECONFIG_PATH'; \
-    kubectl create token headlamp-admin -n headlamp --duration=24h" > "$TOKEN_FILE_PATH"
+TOKEN=$(sudo -u "$REAL_USER" bash -c "export KUBECONFIG='$LOCAL_KUBECONFIG_PATH'; kubectl create token $HEADLAMP_NS-admin -n $HEADLAMP_NS --duration=8760h")
 
-if [ ! -s "$TOKEN_FILE_PATH" ]; then
-    log_error "Failed to generate access token."
+
+# 1. Capture the NGINX NodePorts (HTTP and HTTPS)
+echo -e "config is $LOCAL_KUBECONFIG_PATH"
+export KUBECONFIG="$LOCAL_KUBECONFIG_PATH"
+
+INGRESS_HOST=$(kubectl get ingress $HEADLAMP_NS -n $HEADLAMP_NS -o jsonpath='{.spec.rules[0].host}')
+HOSTNAME=$INGRESS_HOST
+echo $INGRESS_HOST
+##1. Check if the hostname already exists in /etc/hosts##
+
+if grep -qw "$HOSTNAME" "$HOSTS_FILE"; then
+    echo -e "[INFO]  $HOSTNAME already exists in $HOSTS_FILE"
+else
+    echo -e "[INFO]  Adding $HOSTNAME to $HOSTS_FILE..."
+    
+    # 2. Append the entry
+    # Using 'printf' to ensure a newline is handled correctly
+    echo "$MASTER_IP  $HOSTNAME" | sudo tee -a "$HOSTS_FILE" > /dev/null
+    
+    if [ $? -eq 0 ]; then
+        echo -e "[OK]    Successfully added $HOSTNAME"
+    else
+        echo -e "[ERROR] Failed to update $HOSTS_FILE"
+        exit 1
+    fi
 fi
+
+
+HTTP_PORT=$(kubectl get svc ingress-nginx-controller -n $NGINX_NAMESPACE   -o jsonpath='{.spec.ports[?(@.port==80)].nodePort}')
+HTTPS_PORT=$(kubectl get svc ingress-nginx-controller -n $NGINX_NAMESPACE   -o jsonpath='{.spec.ports[?(@.port==443)].nodePort}')
+
+# 2. Capture the Internal IP of the cluster node
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+
+# 3. Capture the Ingress Hostname from your configuration
+INGRESS_HOST=$(kubectl get ingress $HEADLAMP_INGRESS_NAME -n $HEADLAMP_NS -o jsonpath='{.spec.rules[0].host}')
+
+# 5. Echo all data into the text file
+{
+    echo "-------------------------------------------------------"
+    echo "KUBERNETES HEADLAMP ACCESS DETAILS"
+    echo "Generated on: $(date)"
+    echo "-------------------------------------------------------"
+    echo "VM Master IP:    $NODE_IP"
+    echo "Ingress Host:   $INGRESS_HOST"
+    echo ""
+    echo "HTTP URL:      http://$INGRESS_HOST:$HTTP_PORT"
+    echo "HTTPS URL:     https://$INGRESS_HOST:$HTTPS_PORT"
+    echo "-------------------------------------------------------"
+    echo "REQUIRED /etc/hosts ENTRY:"
+    echo "$NODE_IP $INGRESS_HOST"
+    echo "-------------------------------------------------------"
+    echo "AUTH TOKEN:"
+    echo "$TOKEN"
+    echo "-------------------------------------------------------"
+} >> "$TOKEN_FILE_PATH"
 
 # Ensure ownership is correct
 chown "$REAL_USER":"$REAL_USER" "$TOKEN_FILE_PATH"
 
-chown "$REAL_USER":"$REAL_USER" "$TOKEN_FILE_PATH"
-
-
-
-# 1. Check if the hostname already exists in /etc/hosts
-# -q: quiet mode (no output)
-# -w: match the whole word (prevents matching "myheadlamp.local")
-
-# if grep -qw "$HOSTNAME" "$HOSTS_FILE"; then
-#     echo -e "[INFO]  $HOSTNAME already exists in $HOSTS_FILE"
-# else
-#     echo -e "[INFO]  Adding $HOSTNAME to $HOSTS_FILE..."
-    
-#     # 2. Append the entry
-#     # Using 'printf' to ensure a newline is handled correctly
-#     echo "$IP_ADDR  $HOSTNAME" | sudo tee -a "$HOSTS_FILE" > /dev/null
-    
-#     if [ $? -eq 0 ]; then
-#         echo -e "[OK]    Successfully added $HOSTNAME"
-#     else
-#         echo -e "[ERROR] Failed to update $HOSTS_FILE"
-#         exit 1
-#     fi
-# fi
+echo "Access details and token have been captured in: $TOKEN_FILE_PATH"
 
 # =============================================================================
 # Final Summary

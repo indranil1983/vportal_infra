@@ -1,25 +1,23 @@
-kind: Ingress
 apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: headlamp
   namespace: headlamp
   annotations:
-    kubernetes.io/tls-acme: "true"
-    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    # Forces NGINX to handle this (replaces Contour)
+    kubernetes.io/ingress.class: nginx
+    # Prevents automatic HTTPS redirect (useful for local testing)
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
-  ingressClassName: contour
-  tls:
-  - secretName: headlamp
-    hosts:
-    - headlamp.local
+  ingressClassName: nginx
   rules:
   - host: headlamp.local
     http:
       paths:
       - path: /
-        pathType: ImplementationSpecific
+        pathType: Prefix
         backend:
           service:
             name: headlamp
             port:
-              number: 8081
+              number: 80 # MUST match the 'port' in the Service YAML above
