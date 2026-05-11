@@ -134,6 +134,3 @@ CLUSTER_INFO_FILE="$OUTPUT_DIR/cluster-info.txt"
 echo "$HEADLAMP_SUMMARY_PLAIN" >> "$CLUSTER_INFO_FILE"
 
 echo -e "\n${GREEN}=============================================================${NC}"
-cat "$CLUSTER_INFO_FILE"
-
-log_info "Access details and token have been captured in: $TOKEN_FILE_PATH"

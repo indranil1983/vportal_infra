@@ -95,3 +95,4 @@ export HEADLAMP_INGRESS_HOSTNAME="headlamp.vplatform.local"
 
 # Host Configuration
 export HOSTS_FILE="/etc/hosts"
+export HEADLAMP_PROXY_PORT="8081" # Port on host for Nginx proxy to Headlamp

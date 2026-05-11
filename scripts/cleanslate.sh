@@ -100,7 +100,6 @@ fi
 for IP in "${VM_IPS[@]}"; do
     log_info "Removing $IP from known_hosts..."
     ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$IP" 2>/dev/null || true
-    sudo -u "$REAL_USER" ssh-keygen -f "$REAL_HOME/.ssh/known_hosts" -R "$IP" 2>/dev/null || true
 done
 
 log_success "Clean complete."

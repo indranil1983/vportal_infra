@@ -307,8 +307,6 @@ EOF
   mkdir -p "$OUTPUT_DIR"
   echo "$K8S_SUMMARY_PLAIN" > "$CLUSTER_INFO_FILE"
 
-  log_info "Cluster summary also saved to: $CLUSTER_INFO_FILE"
-
   # Print the contents of the cluster-info file to the console
   echo -e "\n${GREEN}=============================================================${NC}"
   cat "$CLUSTER_INFO_FILE"
