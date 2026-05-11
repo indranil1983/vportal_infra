@@ -72,7 +72,7 @@ log_success "Nginx reverse proxy for Headlamp configured and running on port $HE
 
 # 3. Configure Tailscale Web Access
 log_info "Enabling Tailscale Web Access for Headlamp on port $HEADLAMP_PROXY_PORT..."
-sudo tailscale serve --bg --web-http "$HEADLAMP_PROXY_PORT"
+sudo tailscale serve --bg "$HEADLAMP_PROXY_PORT"
 log_success "Tailscale Web Access configured. You will need to approve this in the Tailscale admin console."
 
 log_info "To approve, visit: https://login.tailscale.com/admin/machines"

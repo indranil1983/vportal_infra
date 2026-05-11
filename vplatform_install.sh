@@ -79,4 +79,3 @@ if [ "$RUN_TAILSCALE_PROXY" = true ]; then
     log_phase "setup-headlamp-tailscale-proxy.sh"
     bash "$SCRIPTS_DIR/setup-headlamp-tailscale-proxy.sh"
 fi
-fi
