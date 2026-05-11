@@ -4,14 +4,14 @@ metadata:
   name: headlamp
   namespace: headlamp
   annotations:
-    # Forces NGINX to handle this (replaces Contour)
-    kubernetes.io/ingress.class: nginx
-    # Prevents automatic HTTPS redirect (useful for local testing)
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # Use Contour as the Ingress controller
+    kubernetes.io/ingress.class: contour
+    # Enable WebSocket support for Headlamp
+    projectcontour.io/websocket: "true"
 spec:
-  ingressClassName: nginx
+  ingressClassName: contour
   rules:
-  - host: headlamp.local
+  - host: headlamp.vplatform.local # This will be replaced by $HEADLAMP_INGRESS_HOSTNAME
     http:
       paths:
       - path: /
@@ -20,4 +20,4 @@ spec:
           service:
             name: headlamp
             port:
-              number: 80 # MUST match the 'port' in the Service YAML above
+              number: 80

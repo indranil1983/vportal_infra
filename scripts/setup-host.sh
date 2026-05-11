@@ -57,6 +57,15 @@ sudo "$KUBESPRAY_VENV_DIR/bin/pip" install -q -r "$KUBESPRAY_INSTALL_DIR/require
 sudo ln -sf "$KUBESPRAY_VENV_DIR/bin/ansible" /usr/local/bin/ansible
 sudo ln -sf "$KUBESPRAY_VENV_DIR/bin/ansible-playbook" /usr/local/bin/ansible-playbook
 
+# 6. Helm
+log_info "Installing Helm..."
+if ! command -v helm &> /dev/null; then
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    log_success "Helm installed: $(helm version --short)"
+else
+    log_info "Helm is already installed: $(helm version --short)"
+fi
+
 ############ update qemu conf access ################
 
 log_info "Configuring QEMU Permissions (Prepending to top of file)"

@@ -83,3 +83,15 @@ export OPENTOFU_VERSION="1.11.6"
 export TF_VAR_ssh_key_path="$SSH_KEY_PATH"
 export TF_VAR_ssh_public_key_path="$SSH_KEY_PATH.pub"
 export TF_VAR_pool_path="$IMAGES_DIR"
+
+# Ingress & Add-ons
+export CONTOUR_NAMESPACE="projectcontour"
+export CONTOUR_DEPLOY_LABEL="$CONTOUR_NAMESPACE"
+export CONTOUR_ENVOY_SERVICE="projectcontour-envoy"
+export METALLB_NAMESPACE="metallb-system"
+export METALLB_IP_RANGE="192.168.122.200-192.168.122.250"
+export HEADLAMP_NAMESPACE="headlamp"
+export HEADLAMP_INGRESS_HOSTNAME="headlamp.vplatform.local"
+
+# Host Configuration
+export HOSTS_FILE="/etc/hosts"
