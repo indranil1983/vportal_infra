@@ -11,9 +11,11 @@ else
 fi
 
 usage() {
-    echo "Usage: $0 [-c] [-u] [-d] [-i] [-l] [-t] [-h]"
+    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-d] [-i] [-l] [-t] [-h]"
     echo "  -c  Run cleanslate.sh"
     echo "  -u  Run unsetup.sh"
+    echo "  -start  Run startup.sh (Bring up VMs after host reboot)"
+    echo "  -stop   Run stop.sh (Gracefully shutdown VMs)"
     echo "  -d  Run deploy.sh"
     echo "  -i  Run install_contour_ingress.sh"
     echo "  -l  Run deploy-headlamp.sh"
@@ -27,27 +29,32 @@ RUN_CLEAN=false
 RUN_UNSETUP=false
 RUN_DEPLOY=false
 RUN_CONTOUR=false
+RUN_STARTUP=false
+RUN_STOP=false
 RUN_HEADLAMP=false
 RUN_TAILSCALE_PROXY=false
 
-while getopts "cudilh" opt; do
-  case $opt in
-    c) RUN_CLEAN=true ;;
-    u) RUN_UNSETUP=true ;;
-    d) RUN_DEPLOY=true ;;
-    i) RUN_CONTOUR=true ;;
-    l) RUN_HEADLAMP=true ;;
-    t) RUN_TAILSCALE_PROXY=true ;;
-    h) usage ;;
-    *) usage ;;
-  esac
-done
-
 # If no arguments are provided, do nothing
-if [ $OPTIND -eq 1 ]; then
+if [ $# -eq 0 ]; then
     echo "No arguments provided. Nothing to run."
     usage
 fi
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -c) RUN_CLEAN=true ;;
+        -u) RUN_UNSETUP=true ;;
+        -start) RUN_STARTUP=true ;;
+        -stop) RUN_STOP=true ;;
+        -d) RUN_DEPLOY=true ;;
+        -i) RUN_CONTOUR=true ;;
+        -l) RUN_HEADLAMP=true ;;
+        -t) RUN_TAILSCALE_PROXY=true ;;
+        -h) usage ;;
+        *) usage ;;
+    esac
+    shift
+done
 
 # --- Execution Logic ---
 if [ "$RUN_CLEAN" = true ]; then
@@ -58,6 +65,16 @@ fi
 if [ "$RUN_UNSETUP" = true ]; then
     log_phase "unsetup.sh"
     bash "$SCRIPTS_DIR/unsetup.sh"
+fi
+
+if [ "$RUN_STARTUP" = true ]; then
+    log_phase "startup.sh"
+    bash "$SCRIPTS_DIR/startup.sh"
+fi
+
+if [ "$RUN_STOP" = true ]; then
+    log_phase "stop.sh"
+    bash "$SCRIPTS_DIR/stop.sh"
 fi
 
 if [ "$RUN_DEPLOY" = true ]; then
