@@ -23,11 +23,29 @@ ping -c 1 -W 2 "$MASTER_IP" >/dev/null 2>&1 && log_success "Master is reachable"
 if [ -f "$LOCAL_KUBECONFIG_PATH" ]; then
     export KUBECONFIG="$LOCAL_KUBECONFIG_PATH"
     log_info "Fetching Envoy External IP..."
-    ENVOY_IP=$(kubectl get svc -n "$CONTOUR_NAMESPACE" "$CONTOUR_ENVOY_SERVICE" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "NONE")
+    ENVOY_IP=$(kubectl get svc -n "$CONTOUR_NAMESPACE" "$CONTOUR_ENVOY_SERVICE" -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
     
-    if [[ "$ENVOY_IP" != "NONE" ]]; then
+    if [[ -n "$ENVOY_IP" ]]; then
         log_success "Envoy Ingress is alive at $ENVOY_IP"
+        
+        # Verify /etc/hosts
+        if grep -q "$ENVOY_IP.*$HEADLAMP_INGRESS_HOSTNAME" /etc/hosts; then
+            log_success "/etc/hosts is correctly mapped."
+        else
+            log_warn "/etc/hosts entry for $HEADLAMP_INGRESS_HOSTNAME might be missing or incorrect for IP $ENVOY_IP"
+        fi
+
+        # Direct Connectivity Test (Bypassing Nginx)
+        log_info "Testing direct connection to Ingress..."
+        if curl -I -s --connect-timeout 2 -H "Host: $HEADLAMP_INGRESS_HOSTNAME" "http://$ENVOY_IP/" | grep -q "HTTP/1.1"; then
+            log_success "Backend Ingress is responding to HTTP requests."
+        else
+            log_warn "Backend Ingress is NOT responding. Service may still be initializing."
+        fi
     else
-        log_warn "Envoy Ingress has no External IP yet."
+        log_error "Envoy Ingress has no External IP. MetalLB might not be running."
     fi
+
+    log_info "Checking Headlamp Pod status..."
+    kubectl get pods -n "$HEADLAMP_NAMESPACE"
 fi
