@@ -11,12 +11,13 @@ else
 fi
 
 usage() {
-    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-check] [-d] [-i] [-l] [-t] [-h]"
+    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-check] [-fix-arp] [-d] [-i] [-l] [-t] [-h]"
     echo "  -c  Run cleanslate.sh"
     echo "  -u  Run unsetup.sh"
     echo "  -start  Run startup.sh (Bring up VMs after host reboot)"
     echo "  -stop   Run stop.sh (Gracefully shutdown VMs)"
     echo "  -check  Run check-ingress.sh (Verify Nginx/Ingress status)"
+    echo "  -fix-arp Run fix-metallb-strict-arp.sh (Apply MetalLB strictARP hotfix)"
     echo "  -d  Run deploy.sh"
     echo "  -i  Run install_contour_ingress.sh"
     echo "  -l  Run deploy-headlamp.sh"
@@ -33,6 +34,7 @@ RUN_CONTOUR=false
 RUN_STARTUP=false
 RUN_STOP=false
 RUN_CHECK=false
+RUN_FIX_ARP=false
 RUN_HEADLAMP=false
 RUN_TAILSCALE_PROXY=false
 
@@ -49,6 +51,7 @@ while [[ $# -gt 0 ]]; do
         -start) RUN_STARTUP=true ;;
         -stop) RUN_STOP=true ;;
         -check) RUN_CHECK=true ;;
+        -fix-arp) RUN_FIX_ARP=true ;;
         -d) RUN_DEPLOY=true ;;
         -i) RUN_CONTOUR=true ;;
         -l) RUN_HEADLAMP=true ;;
@@ -78,6 +81,11 @@ fi
 if [ "$RUN_STOP" = true ]; then
     log_phase "stop.sh"
     bash "$SCRIPTS_DIR/stop.sh"
+fi
+
+if [ "$RUN_FIX_ARP" = true ]; then
+    log_phase "fix-metallb-strict-arp.sh"
+    bash "$SCRIPTS_DIR/fix-metallb-strict-arp.sh"
 fi
 
 if [ "$RUN_CHECK" = true ]; then

@@ -39,6 +39,9 @@ kubeconfig_localhost: true
 kube_proxy_mode: ipvs
 kube_apiserver_node_port_range: "30000-32767"
 
+# Required for MetalLB L2 mode when using IPVS
+kube_proxy_strict_arp: true
+
 # etcd configuration
 etcd_deployment_type: host
 
