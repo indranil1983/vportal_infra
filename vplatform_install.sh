@@ -11,13 +11,12 @@ else
 fi
 
 usage() {
-    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-check] [-fix-arp] [-d] [-i] [-l] [-t] [-h]"
+    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-check] [-d] [-i] [-l] [-t] [-h]"
     echo "  -c  Run cleanslate.sh"
     echo "  -u  Run unsetup.sh"
     echo "  -start  Run startup.sh (Bring up VMs after host reboot)"
     echo "  -stop   Run stop.sh (Gracefully shutdown VMs)"
     echo "  -check  Run check-ingress.sh (Verify Nginx/Ingress status)"
-    echo "  -fix-arp Run fix-metallb-strict-arp.sh (Apply MetalLB strictARP hotfix)"
     echo "  -d  Run deploy.sh"
     echo "  -i  Run install_contour_ingress.sh"
     echo "  -l  Run deploy-headlamp.sh"
@@ -83,14 +82,14 @@ if [ "$RUN_STOP" = true ]; then
     bash "$SCRIPTS_DIR/stop.sh"
 fi
 
-if [ "$RUN_FIX_ARP" = true ]; then
-    log_phase "fix-metallb-strict-arp.sh"
-    bash "$SCRIPTS_DIR/fix-metallb-strict-arp.sh"
-fi
-
 if [ "$RUN_CHECK" = true ]; then
     log_phase "check-ingress.sh"
     bash "$SCRIPTS_DIR/check-ingress.sh"
+fi
+
+if [ "$RUN_FIX_ARP" = true ]; then
+    log_phase "fix-metallb-strict-arp.sh"
+    bash "$SCRIPTS_DIR/fix-metallb-strict-arp.sh"
 fi
 
 if [ "$RUN_DEPLOY" = true ]; then
