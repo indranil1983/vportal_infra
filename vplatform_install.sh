@@ -11,11 +11,12 @@ else
 fi
 
 usage() {
-    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-d] [-i] [-l] [-t] [-h]"
+    echo "Usage: $0 [-c] [-u] [-start] [-stop] [-check] [-d] [-i] [-l] [-t] [-h]"
     echo "  -c  Run cleanslate.sh"
     echo "  -u  Run unsetup.sh"
     echo "  -start  Run startup.sh (Bring up VMs after host reboot)"
     echo "  -stop   Run stop.sh (Gracefully shutdown VMs)"
+    echo "  -check  Run check-ingress.sh (Verify Nginx/Ingress status)"
     echo "  -d  Run deploy.sh"
     echo "  -i  Run install_contour_ingress.sh"
     echo "  -l  Run deploy-headlamp.sh"
@@ -31,6 +32,7 @@ RUN_DEPLOY=false
 RUN_CONTOUR=false
 RUN_STARTUP=false
 RUN_STOP=false
+RUN_CHECK=false
 RUN_HEADLAMP=false
 RUN_TAILSCALE_PROXY=false
 
@@ -46,6 +48,7 @@ while [[ $# -gt 0 ]]; do
         -u) RUN_UNSETUP=true ;;
         -start) RUN_STARTUP=true ;;
         -stop) RUN_STOP=true ;;
+        -check) RUN_CHECK=true ;;
         -d) RUN_DEPLOY=true ;;
         -i) RUN_CONTOUR=true ;;
         -l) RUN_HEADLAMP=true ;;
@@ -75,6 +78,11 @@ fi
 if [ "$RUN_STOP" = true ]; then
     log_phase "stop.sh"
     bash "$SCRIPTS_DIR/stop.sh"
+fi
+
+if [ "$RUN_CHECK" = true ]; then
+    log_phase "check-ingress.sh"
+    bash "$SCRIPTS_DIR/check-ingress.sh"
 fi
 
 if [ "$RUN_DEPLOY" = true ]; then
