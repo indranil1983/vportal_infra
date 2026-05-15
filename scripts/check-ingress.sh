@@ -44,11 +44,12 @@ if [ -f "$LOCAL_KUBECONFIG_PATH" ]; then
         fi
 
         log_info "Verifying kube-proxy strictARP setting (Required for IPVS)..."
-        STRICT_ARP=$(kubectl get configmap -n kube-system kube-proxy -o jsonpath='{.data.config}' | grep "strictARP" || echo "not found")
-        if echo "$STRICT_ARP" | grep -q "true"; then
+        # Search all data keys (config, config.conf, etc.) and handle case sensitivity/spacing
+        STRICT_ARP_VAL=$(kubectl get configmap -n kube-system kube-proxy -o jsonpath='{.data.*}' | grep -oi "strictARP: [a-z]*" || echo "not found")
+        if echo "$STRICT_ARP_VAL" | grep -qi "true"; then
             log_success "kube-proxy strictARP is enabled."
         else
-            log_warn "kube-proxy strictARP is NOT enabled or config not found. Consider running '-fix-arp'."
+            log_warn "kube-proxy strictARP is NOT enabled (Found: $STRICT_ARP_VAL). Consider running '$SCRIPT_DIR/fix-metallb-strict-arp.sh'."
         fi
 
         log_success "Envoy Ingress is alive at $ENVOY_IP"

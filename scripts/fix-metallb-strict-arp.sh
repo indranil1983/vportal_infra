@@ -29,18 +29,18 @@ log_step "Applying MetalLB Strict ARP Hotfix"
 # 1. Modify kube-proxy configuration to enable strictARP
 log_info "Enabling strictARP in kube-proxy configmap..."
 kubectl get configmap kube-proxy -n kube-system -o yaml | \
-sed 's/strictARP: false/strictARP: true/' | \
-kubectl apply -f -
+sed -E 's/strictARP:[[:space:]]*false/strictARP: true/g' | \
+kubectl apply -f - --force
 log_success "kube-proxy configmap updated."
 
 # 2. Restart kube-proxy pods to pick up the change
 log_info "Restarting kube-proxy daemonset..."
-kubectl rollout restart daemonset kube-proxy -n kube-system
+kubectl rollout restart daemonset kube-proxy -n kube-system && kubectl rollout status daemonset kube-proxy -n kube-system
 log_success "kube-proxy pods restarted."
 
 # 3. Restart MetalLB speaker pods (to force re-announcement)
 log_info "Restarting MetalLB speaker pods..."
-kubectl delete pods -n "$METALLB_NAMESPACE" -l app.kubernetes.io/name=metallb
+kubectl delete pods -n "$METALLB_NAMESPACE" -l component=speaker || kubectl delete pods -n "$METALLB_NAMESPACE" -l app.kubernetes.io/name=metallb
 log_success "MetalLB speaker pods restarted."
 
 # 4. Flush Host ARP Cache for the LoadBalancer IP

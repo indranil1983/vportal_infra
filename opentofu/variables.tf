@@ -67,9 +67,9 @@ variable "vms" {
   }))
   default = {
     "k8s-master" = {
-      vcpu      = 2
-      memory_mb = 3072
-      disk_size = 21474836480   # 20GB in bytes
+      vcpu      = 3
+      memory_mb = 12000
+      disk_size = 107374182400   # 20GB in bytes
       ip        = "192.168.122.10"
       role      = "master"
     }
